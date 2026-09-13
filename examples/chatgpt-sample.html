@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python 列表去重</title>
+<style>
+:root { --fg:#1f2328; --muted:#6a737d; --line:#e2e5e9; --user:#0b5cad; --assistant:#0f7b4f; --code-bg:#f6f8fa; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px 40px 64px; color: var(--fg); background: #fff;
+  font: 15px/1.75 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+.doc { max-width: 900px; margin: 0 auto; }
+.doc-title { font-size: 26px; line-height: 1.3; margin: 0 0 12px; }
+.meta { color: var(--muted); font-size: 13px; border-left: 3px solid var(--line); padding: 8px 12px; margin: 0 0 24px; background: #fafbfc; }
+.meta div { margin: 2px 0; word-break: break-all; }
+.toc { background: #fafbfc; border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; margin-bottom: 28px; }
+.toc ol { margin: 6px 0 0 18px; padding: 0; }
+.toc li { margin: 2px 0; font-size: 13px; }
+.msg { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 22px; }
+.msg-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+.msg-user .msg-head { color: var(--user); }
+.msg-assistant .msg-head { color: var(--assistant); }
+.msg-index { color: var(--muted); font-weight: 400; font-size: 13px; }
+.body > :first-child { margin-top: 0; }
+.body p { margin: 0 0 12px; }
+.body h1,.body h2,.body h3,.body h4,.body h5,.body h6 { margin: 20px 0 10px; line-height: 1.35; }
+.body code { background: var(--code-bg); padding: 2px 5px; border-radius: 4px; font-size: 13px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+.body pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+.body pre code { background: none; padding: 0; font-size: 13px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.body blockquote { margin: 12px 0; padding: 4px 14px; border-left: 3px solid var(--line); color: var(--muted); }
+.body table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+.body th,.body td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+.body th { background: #f6f8fa; }
+.body img { max-width: 100%; height: auto; border-radius: 6px; }
+.body ul,.body ol { margin: 8px 0 12px 22px; padding: 0; }
+.body li { margin: 4px 0; }
+.body details { margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: #fbfbfc; }
+.body summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.body .math { text-align: center; margin: 12px 0; font-family: "Cambria Math", "Latin Modern Math", Georgia, serif; font-size: 15px; }
+.body .math-inline { font-family: "Cambria Math", "Latin Modern Math", Georgia, serif; }
+.citations { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1 class="doc-title">Python 列表去重</h1>
+<div class="meta"><div>平台: ChatGPT</div><div>消息数: 4</div><div>导出时间: 2026-09-13 19:42</div><div>来源: <a href="https://chatgpt.com/c/abc123">https://chatgpt.com/c/abc123</a></div></div>
+<div class="toc"><strong>目录</strong><ol><li><a href="#msg-0">用户 · 如何用 Python 给列表去重？ 要求： 1. 保持原有顺序 2. 给出时间复杂度</a></li><li><a href="#msg-1">助手 · 可以用 dict.fromkeys 保持顺序去重： items = [1, 2, 2, 3, 1] unique = l</a></li><li><a href="#msg-2">用户 · 如果元素是字典呢？</a></li><li><a href="#msg-3">助手 · 字典不可哈希，可以用 json.dumps 或元组做 key： seen = set() unique = [] for</a></li></ol></div>
+<section class="msg msg-user" id="msg-0">
+<div class="msg-head"><span>👤 用户</span><span class="msg-index">#1</span></div>
+<div class="body"><p>如何用 Python 给列表去重？ 要求：</p>
+<ol><li>保持原有顺序  </li><li>给出时间复杂度</li></ol></div>
+</section>
+<section class="msg msg-assistant" id="msg-1">
+<div class="msg-head"><span>🤖 助手</span><span class="msg-index">#2</span></div>
+<div class="body"><p>可以用 <code>dict.fromkeys</code> 保持顺序去重：</p>
+<pre><code class="language-python">items = [1, 2, 2, 3, 1]
+unique = list(dict.fromkeys(items))
+print(unique)  # [1, 2, 3]</code></pre>
+<p>几种方案的对比：</p>
+<table><thead><tr><th>方案</th><th>时间复杂度</th><th>是否保序</th></tr></thead><tbody><tr><td>dict.fromkeys</td><td>O(n)</td><td>是</td></tr><tr><td>set</td><td>O(n)</td><td>否</td></tr></tbody></table>
+<ul><li>需要保序：<strong>dict.fromkeys</strong></li><li>不关心顺序：<code>list(set(items))</code></li></ul>
+<div class="math">T(n) = O(n)</div>
+<p>参考 <a href="https://docs.python.org/3/library/stdtypes.html#dict.fromkeys">Python 官方文档</a>。</p>
+<p><img alt="性能对比图" src="https://cdn.example.com/chart.png"></p>
+<div class="citations"><strong>参考链接</strong><ol><li><a href="https://docs.python.org/3/library/stdtypes.html#dict.fromkeys">Python 官方文档</a></li></ol></div></div>
+</section>
+<section class="msg msg-user" id="msg-2">
+<div class="msg-head"><span>👤 用户</span><span class="msg-index">#3</span></div>
+<div class="body"><p>如果元素是字典呢？</p></div>
+</section>
+<section class="msg msg-assistant" id="msg-3">
+<div class="msg-head"><span>🤖 助手</span><span class="msg-index">#4</span></div>
+<div class="body"><details><summary>思考过程</summary><div class="details-body"><p>用户问的是不可哈希元素，需要用 key 函数。</p></div></details>
+<p>字典不可哈希，可以用 <code>json.dumps</code> 或元组做 key：</p>
+<pre><code class="language-python">seen = set()
+unique = []
+for d in rows:
+    key = tuple(sorted(d.items()))
+    if key not in seen:
+        seen.add(key)
+        unique.append(d)</code></pre>
+<blockquote><p>字典本身没有顺序，保序只对列表有意义。</p></blockquote></div>
+</section>
+</div>
+</body>
+</html>

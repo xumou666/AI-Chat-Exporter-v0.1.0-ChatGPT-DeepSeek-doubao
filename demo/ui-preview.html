@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>AI Chat Exporter — UI 预览 / panel preview</title>
+  <link rel="stylesheet" href="../src/ui/panel.css">
+  <style>
+    body { font: 15px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; padding: 28px 34px 120px; color: #1f2328; background: #fff; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .note { background: #f6f8fa; border: 1px solid #e2e5e9; border-radius: 8px; padding: 10px 14px; color: #57606a; font-size: 13px; max-width: 720px; }
+    .chat { max-width: 720px; margin-top: 22px; }
+    .row { padding: 14px 0; border-bottom: 1px solid #eef1f4; }
+    .who { font-size: 12px; color: #6a737d; margin-bottom: 4px; }
+    .user .txt { text-align: right; }
+    pre { background: #f6f8fa; padding: 10px 12px; border-radius: 8px; overflow: auto; font-size: 13px; }
+    code { background: #f6f8fa; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>AI Chat Exporter — UI 预览</h1>
+  <div class="note">
+    这个页面同步渲染面板（不依赖内容脚本的异步启动），用于生成 <code>docs/images/</code> 里的截图：
+    <code>#panel</code> 打开面板、<code>#range=2-4</code> 打开并填入范围、<code>#diag</code> 展开结构诊断。
+  </div>
+
+  <div class="chat">
+    <div class="row user">
+      <div class="who">我</div>
+      <div class="txt" style="text-align: right">帮我给这个导出工具写一段使用说明，要包含安装步骤和注意事项。</div>
+    </div>
+    <div class="row assistant">
+      <div class="who">助手</div>
+      <div>
+        <p>安装分成两步：</p>
+        <ol>
+          <li>打开 <code>chrome://extensions</code>，打开右上角"开发者模式"</li>
+          <li>点击"加载已解压的扩展程序"，选择本仓库目录</li>
+        </ol>
+        <p>注意事项：</p>
+        <ul>
+          <li>安装后需要刷新已打开的对话页面</li>
+          <li>图片导出会连同 Markdown 一起打包成 ZIP</li>
+          <li>PDF 走浏览器打印对话框，选择"另存为 PDF"</li>
+        </ul>
+        <pre><code># 运行测试
+npm test</code></pre>
+      </div>
+    </div>
+    <div class="row user">
+      <div class="who">我</div>
+      <div class="txt" style="text-align: right">如果网站改版了怎么办？</div>
+    </div>
+    <div class="row assistant">
+      <div class="who">助手</div>
+      <div><p>面板里有"手动校准"：先点一条用户消息，再点一条助手消息，导出器会学习当前页面的结构并保存下来。</p></div>
+    </div>
+  </div>
+
+  <script src="../src/core/dom.js"></script>
+  <script src="../src/core/markdown.js"></script>
+  <script src="../src/core/engine.js"></script>
+  <script src="../src/core/schema.js"></script>
+  <script src="../src/core/serialize.js"></script>
+  <script src="../src/core/html.js"></script>
+  <script src="../src/core/range.js"></script>
+  <script src="../src/core/zip.js"></script>
+  <script src="../src/core/images.js"></script>
+  <script src="../src/core/download.js"></script>
+  <script src="../src/core/pdf.js"></script>
+  <script src="../src/core/i18n.js"></script>
+  <script src="../src/core/app.js"></script>
+  <script src="../src/platforms/chatgpt.js"></script>
+  <script src="../src/platforms/deepseek.js"></script>
+  <script src="../src/platforms/doubao.js"></script>
+  <script src="../src/platforms/generic.js"></script>
+  <script src="../src/platforms/index.js"></script>
+  <script src="../src/ui/panel.js"></script>
+  <script>
+    // Everything here is synchronous on purpose: the panel is fully rendered
+    // before the first paint, so headless screenshots are deterministic.
+    (function () {
+      var NS = window.AIChatExporter;
+      var locale = 'zh-CN';
+      var platform = NS.platforms.detect(location);
+      var extraction = NS.core.app.extract(document, { platform: platform, locale: locale, reasoning: true, scope: { mode: 'full' } });
+      var conversation = extraction.conversation;
+      var settings = NS.core.app.mergeSettings({ locale: locale, toc: true, reasoning: true });
+
+      var panel = NS.ui.createPanel({
+        document: document,
+        platform: platform,
+        settings: settings,
+        onExport: function () {},
+        onCopy: function () { return Promise.resolve(); },
+        onCalibrate: function () {},
+        onResetRules: function () {},
+        onSettingsChange: function () {}
+      });
+      panel.mount(document.body);
+      panel.setMessageCount({
+        count: conversation.messageCount,
+        options: NS.core.range.listOptions(conversation.messages, locale, 32)
+      });
+      panel.setStatus('准备就绪 · 已识别 ' + conversation.messageCount + ' 条消息（' + platform.label + '）');
+      var diag = NS.core.engine.debugCandidates(document, platform);
+      diag.warnings = extraction.warnings;
+      panel.setDiagnostics(diag);
+
+      var root = document.getElementById('aice-root');
+      var hash = String(location.hash || '');
+      if (!hash) return;
+
+      var rangeMatch = hash.match(/range=(\d+)\s*-\s*(\d+)/);
+      if (hash.indexOf('range') !== -1) {
+        var select = root.querySelector('select');
+        select.value = 'range';
+        select.dispatchEvent(new Event('change'));
+        var inputs = root.querySelectorAll('input[type="number"]');
+        if (rangeMatch) {
+          inputs[0].value = rangeMatch[1];
+          inputs[0].dispatchEvent(new Event('input'));
+          inputs[1].value = rangeMatch[2];
+          inputs[1].dispatchEvent(new Event('input'));
+        }
+      }
+      if (hash.indexOf('diag') !== -1) root.querySelector('.aice-diag').open = true;
+      panel.toggle(true);
+    })();
+  </script>
+</body>
+</html>

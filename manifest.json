@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "AI Chat Exporter — ChatGPT / DeepSeek / 豆包 对话导出",
+  "version": "0.1.0",
+  "description": "一键把网页端 ChatGPT / DeepSeek / 豆包 的对话导出为 Markdown、JSON、PDF、HTML 或纯文本，支持部分导出、图片打包与目录。",
+  "minimum_chrome_version": "104",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://*.chatgpt.com/*",
+    "https://chat.deepseek.com/*",
+    "https://*.deepseek.com/*",
+    "https://www.doubao.com/*",
+    "https://*.doubao.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "AI Chat Exporter — 导出当前对话",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://chat.deepseek.com/*",
+        "https://www.doubao.com/*",
+        "https://doubao.com/*"
+      ],
+      "js": [
+        "src/core/dom.js",
+        "src/core/markdown.js",
+        "src/core/engine.js",
+        "src/core/schema.js",
+        "src/core/serialize.js",
+        "src/core/html.js",
+        "src/core/range.js",
+        "src/core/zip.js",
+        "src/core/images.js",
+        "src/core/download.js",
+        "src/core/pdf.js",
+        "src/core/i18n.js",
+        "src/core/app.js",
+        "src/platforms/chatgpt.js",
+        "src/platforms/deepseek.js",
+        "src/platforms/doubao.js",
+        "src/platforms/generic.js",
+        "src/platforms/index.js",
+        "src/ui/panel.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/ui/panel.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Renamed widget - SomeChat</title>
+</head>
+<body>
+  <div id="app">
+    <div class="sc-1x9z2k">
+      <div class="sc-q81mz row_ab12">
+        <div class="sc-77aa txt_9f" style="text-align: right">Why is my widget re-rendering twice?</div>
+      </div>
+      <div class="sc-q81mz row_ab12">
+        <div class="sc-31bb md-content">
+          <p>Because the effect depends on an object literal that is re-created every render.</p>
+          <pre><code class="language-jsx">useEffect(() =&gt; {
+  load(options);
+}, [options]);</code></pre>
+        </div>
+      </div>
+      <div class="sc-q81mz row_ab12">
+        <div class="sc-77aa txt_9f" style="text-align: right">How do I fix it?</div>
+      </div>
+      <div class="sc-q81mz row_ab12">
+        <div class="sc-31bb md-content">
+          <p>Memoise the object or depend on its primitive fields:</p>
+          <pre><code class="language-jsx">const stable = useMemo(() =&gt; ({ id }), [id]);
+useEffect(() =&gt; { load(stable); }, [stable]);</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="sc-input"><textarea placeholder="Send a message"></textarea></div>
+  </div>
+</body>
+</html>

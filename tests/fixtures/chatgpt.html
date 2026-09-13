@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Python 列表去重 - ChatGPT</title>
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <a href="/c/abc123" aria-current="page">Python 列表去重</a>
+      <a href="/c/def456">SQL 优化</a>
+    </nav>
+    <main>
+      <div id="thread" class="flex flex-col">
+        <article data-testid="conversation-turn-1">
+          <div class="avatar"><img alt="User" src="https://cdn.example.com/avatar-user.png"></div>
+          <div data-message-author-role="user" data-message-id="msg-u1">
+            <div class="whitespace-pre-wrap">如何用 Python 给列表去重？
+要求：
+1. 保持原有顺序
+2. 给出时间复杂度</div>
+          </div>
+          <button data-testid="copy-turn-action-button" aria-label="Copy">Copy</button>
+        </article>
+
+        <article data-testid="conversation-turn-2">
+          <div class="avatar"><img alt="ChatGPT" src="https://cdn.example.com/avatar-gpt.png"></div>
+          <div data-message-author-role="assistant" data-message-id="msg-a1">
+            <div class="markdown prose">
+              <p>可以用 <code>dict.fromkeys</code> 保持顺序去重：</p>
+              <pre><code class="language-python">items = [1, 2, 2, 3, 1]
+unique = list(dict.fromkeys(items))
+print(unique)  # [1, 2, 3]</code></pre>
+              <p>几种方案的对比：</p>
+              <table>
+                <thead>
+                  <tr><th>方案</th><th>时间复杂度</th><th>是否保序</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>dict.fromkeys</td><td>O(n)</td><td>是</td></tr>
+                  <tr><td>set</td><td>O(n)</td><td>否</td></tr>
+                </tbody>
+              </table>
+              <ul>
+                <li>需要保序：<strong>dict.fromkeys</strong></li>
+                <li>不关心顺序：<code>list(set(items))</code></li>
+              </ul>
+              <div class="katex-display">
+                <span class="katex">
+                  <math><semantics><annotation encoding="application/x-tex">T(n) = O(n)</annotation></semantics></math>
+                </span>
+              </div>
+              <p>参考 <a href="https://docs.python.org/3/library/stdtypes.html#dict.fromkeys">Python 官方文档</a>。</p>
+              <p><img alt="性能对比图" src="https://cdn.example.com/chart.png"></p>
+              <div class="code-block-header"><span>python</span>
+                <button class="copy-code-button" aria-label="Copy code">Copy code</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article data-testid="conversation-turn-3">
+          <div data-message-author-role="user" data-message-id="msg-u2">
+            <div class="whitespace-pre-wrap">如果元素是字典呢？</div>
+          </div>
+        </article>
+
+        <article data-testid="conversation-turn-4">
+          <div data-message-author-role="assistant" data-message-id="msg-a2">
+            <div data-testid="reasoning" class="reasoning">
+              <p>用户问的是不可哈希元素，需要用 key 函数。</p>
+            </div>
+            <div class="markdown prose">
+              <p>字典不可哈希，可以用 <code>json.dumps</code> 或元组做 key：</p>
+              <pre><code class="language-python">seen = set()
+unique = []
+for d in rows:
+    key = tuple(sorted(d.items()))
+    if key not in seen:
+        seen.add(key)
+        unique.append(d)</code></pre>
+              <blockquote>
+                <p>字典本身没有顺序，保序只对列表有意义。</p>
+              </blockquote>
+            </div>
+          </div>
+        </article>
+      </div>
+      <div id="composer-background">
+        <form>
+          <textarea id="prompt-textarea" placeholder="Message ChatGPT"></textarea>
+          <button data-testid="send-button">Send</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

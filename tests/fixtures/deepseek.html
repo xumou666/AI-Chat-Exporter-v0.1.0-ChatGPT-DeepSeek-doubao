@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>如何优化慢 SQL - DeepSeek</title>
+</head>
+<body>
+  <div id="root">
+    <div class="_1f2a9c sidebar">
+      <a href="/a/chat/s/9f8e7d6c">如何优化慢 SQL</a>
+    </div>
+    <div class="chat-container">
+      <div class="_7c1e55">
+        <div class="_9663006 fbb737a4">
+          <div class="fbb737a4">线上有一条 SQL 很慢，怎么排查和优化？</div>
+        </div>
+        <div class="_4f9bf79 d7dc56a8">
+          <div class="ds-markdown ds-markdown--block">
+            <p>排查慢 SQL 一般分三步：</p>
+            <ol>
+              <li>用 <code>EXPLAIN</code> 看执行计划</li>
+              <li>确认索引是否命中</li>
+              <li>检查回表与排序</li>
+            </ol>
+            <pre><code class="language-sql">EXPLAIN ANALYZE
+SELECT id, name FROM users WHERE email = 'a@b.com';</code></pre>
+          </div>
+        </div>
+        <div class="_9663006 fbb737a4">
+          <div class="fbb737a4">email 上没有索引，加索引会更快吗？</div>
+        </div>
+        <div class="_4f9bf79 d7dc56a8">
+          <div class="ds-markdown ds-markdown--block">
+            <p>会。等值查询加普通二级索引即可把全表扫描变成索引查找：</p>
+            <pre><code class="language-sql">CREATE INDEX idx_users_email ON users (email);</code></pre>
+            <p>注意写入放大与基数问题，低基数列（如性别）通常不值得建索引。</p>
+          </div>
+        </div>
+      </div>
+      <div class="_9d3f01 input-wrapper">
+        <textarea placeholder="给 DeepSeek 发送消息"></textarea>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

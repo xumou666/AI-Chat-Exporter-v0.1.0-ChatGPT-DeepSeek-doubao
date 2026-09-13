@@ -1,0 +1,96 @@
+{
+  "schema": "ai-chat-exporter/conversation@1",
+  "platform": "chatgpt",
+  "platformLabel": "ChatGPT",
+  "title": "Python 列表去重",
+  "url": "https://chatgpt.com/c/abc123",
+  "conversationId": "abc123",
+  "model": null,
+  "createdAt": null,
+  "exportedAt": "2026-09-13T11:42:24.770Z",
+  "locale": "zh-CN",
+  "messageCount": 4,
+  "messages": [
+    {
+      "index": 0,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "如何用 Python 给列表去重？  \n要求：  \n1. 保持原有顺序  \n2. 给出时间复杂度",
+      "text": "如何用 Python 给列表去重？\n要求：\n1. 保持原有顺序\n2. 给出时间复杂度",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 1,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "可以用 `dict.fromkeys` 保持顺序去重：\n\n```python\nitems = [1, 2, 2, 3, 1]\nunique = list(dict.fromkeys(items))\nprint(unique)  # [1, 2, 3]\n```\n\n几种方案的对比：\n\n| 方案 | 时间复杂度 | 是否保序 |\n| --- | --- | --- |\n| dict.fromkeys | O(n) | 是 |\n| set | O(n) | 否 |\n\n- 需要保序：**dict.fromkeys**\n- 不关心顺序：`list(set(items))`\n\n$$\nT(n) = O(n)\n$$\n\n参考 [Python 官方文档](https://docs.python.org/3/library/stdtypes.html#dict.fromkeys)。\n\n![性能对比图](https://cdn.example.com/chart.png)",
+      "text": "可以用 dict.fromkeys 保持顺序去重：\nitems = [1, 2, 2, 3, 1]\nunique = list(dict.fromkeys(items))\nprint(unique) # [1, 2, 3]\n几种方案的对比：\n\n方案时间复杂度是否保序\n\ndict.fromkeysO(n)是\nsetO(n)否\n\n需要保序：dict.fromkeys\n不关心顺序：list(set(items))\n\nT(n) = O(n)\n\n参考 Python 官方文档。",
+      "images": [
+        {
+          "url": "https://cdn.example.com/chart.png",
+          "alt": "性能对比图",
+          "raw": "https://cdn.example.com/chart.png"
+        }
+      ],
+      "citations": [
+        {
+          "url": "https://docs.python.org/3/library/stdtypes.html#dict.fromkeys",
+          "title": "Python 官方文档"
+        }
+      ],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 2,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "如果元素是字典呢？",
+      "text": "如果元素是字典呢？",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 3,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "字典不可哈希，可以用 `json.dumps` 或元组做 key：\n\n```python\nseen = set()\nunique = []\nfor d in rows:\n    key = tuple(sorted(d.items()))\n    if key not in seen:\n        seen.add(key)\n        unique.append(d)\n```\n\n> 字典本身没有顺序，保序只对列表有意义。",
+      "text": "字典不可哈希，可以用 json.dumps 或元组做 key：\nseen = set()\nunique = []\nfor d in rows:\nkey = tuple(sorted(d.items()))\nif key not in seen:\nseen.add(key)\nunique.append(d)\n\n字典本身没有顺序，保序只对列表有意义。",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "reasoning": "用户问的是不可哈希元素，需要用 key 函数。",
+      "roleConfidence": "high"
+    }
+  ],
+  "meta": {
+    "exporter": {
+      "name": "AI Chat Exporter",
+      "version": "0.1.0",
+      "engine": "0.1.0"
+    },
+    "extraction": {
+      "strategy": "platform-selectors",
+      "hints": "chatgpt",
+      "rows": 4,
+      "calibrated": false
+    },
+    "warnings": [],
+    "scope": {
+      "mode": "full"
+    }
+  }
+}

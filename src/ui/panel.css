@@ -1,0 +1,319 @@
+/* AI Chat Exporter — injected panel styles (manifest content_scripts.css). */
+
+#aice-root {
+  all: initial;
+  position: fixed;
+  z-index: 2147483000;
+  right: 20px;
+  bottom: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1f2328;
+  text-align: left;
+}
+
+#aice-root * {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+#aice-root .aice-fab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #1f6feb;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+}
+
+#aice-root .aice-fab:hover {
+  background: #1a5fd0;
+}
+
+#aice-root .aice-panel {
+  position: absolute;
+  right: 0;
+  bottom: 52px;
+  width: 340px;
+  max-height: 78vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #d8dee6;
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  padding: 14px 16px 16px;
+}
+
+#aice-root .aice-panel[hidden] {
+  display: none;
+}
+
+#aice-root .aice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#aice-root .aice-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#aice-root .aice-close {
+  border: none;
+  background: transparent;
+  color: #6a737d;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+#aice-root .aice-status {
+  font-size: 12px;
+  color: #57606a;
+  background: #f6f8fa;
+  border: 1px solid #e2e5e9;
+  border-radius: 8px;
+  padding: 6px 9px;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+#aice-root .aice-status.is-error {
+  background: #fff2f0;
+  border-color: #ffc9c4;
+  color: #b42318;
+}
+
+#aice-root .aice-status.is-ok {
+  background: #eefbf3;
+  border-color: #b7e4c7;
+  color: #14663a;
+}
+
+#aice-root .aice-section {
+  margin-bottom: 10px;
+}
+
+#aice-root .aice-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #57606a;
+  margin-bottom: 4px;
+}
+
+#aice-root .aice-formats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+#aice-root .aice-formats button {
+  border: 1px solid #d8dee6;
+  background: #fff;
+  border-radius: 8px;
+  padding: 7px 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#aice-root .aice-formats button.is-active {
+  border-color: #1f6feb;
+  background: #eef4ff;
+  color: #1a5fd0;
+  font-weight: 600;
+}
+
+#aice-root input[type="text"],
+#aice-root input[type="number"],
+#aice-root select {
+  width: 100%;
+  border: 1px solid #d8dee6;
+  border-radius: 7px;
+  padding: 5px 7px;
+  font-size: 12px;
+  background: #fff;
+  color: #1f2328;
+}
+
+#aice-root .aice-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#aice-root .aice-row > * {
+  flex: 1;
+}
+
+/* range picker: 起始/结束 序号旁显示该条消息的角色与开头文字 */
+#aice-root .aice-range-preview {
+  display: none;
+  margin-top: 6px;
+  border-left: 2px solid #d8dee6;
+  padding-left: 8px;
+}
+
+#aice-root .aice-range-preview.is-active {
+  display: block;
+}
+
+#aice-root .aice-range-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 11px;
+  color: #57606a;
+  margin-top: 2px;
+  min-width: 0;
+}
+
+#aice-root .aice-range-tag {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: #1f6feb;
+  font-variant-numeric: tabular-nums;
+}
+
+#aice-root .aice-range-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#aice-root .aice-range-line.is-invalid .aice-range-tag,
+#aice-root .aice-range-line.is-invalid .aice-range-text {
+  color: #b42318;
+}
+
+#aice-root .aice-range-summary {
+  font-size: 11px;
+  color: #8b949e;
+  margin-top: 4px;
+}
+
+#aice-root .aice-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
+}
+
+#aice-root .aice-checks label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #24292f;
+  cursor: pointer;
+}
+
+#aice-root .aice-hint {
+  font-size: 11px;
+  color: #8b949e;
+  margin-top: 3px;
+}
+
+#aice-root .aice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+#aice-root .aice-actions button {
+  flex: 1 1 auto;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid #d8dee6;
+  background: #fff;
+  color: #24292f;
+}
+
+#aice-root .aice-actions button.aice-primary {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+  font-weight: 600;
+}
+
+#aice-root .aice-actions button:hover {
+  filter: brightness(0.97);
+}
+
+#aice-root .aice-actions button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#aice-root .aice-diag {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #57606a;
+}
+
+#aice-root .aice-diag pre {
+  max-height: 160px;
+  overflow: auto;
+  background: #f6f8fa;
+  border: 1px solid #e2e5e9;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 6px 0 0;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+}
+
+#aice-root .aice-diag button {
+  border: 1px solid #d8dee6;
+  background: #fff;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #57606a;
+  cursor: pointer;
+}
+
+#aice-root .aice-diag button:hover {
+  background: #f6f8fa;
+}
+
+#aice-root .aice-warnings {
+  margin: 6px 0 0 16px;
+  padding: 0;
+}
+
+#aice-calibrate-overlay {
+  all: initial;
+  position: fixed;
+  z-index: 2147483001;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  background: #1f6feb;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font: 600 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3);
+  pointer-events: none;
+}
+
+#aice-calibrate-overlay.aice-hidden {
+  display: none;
+}

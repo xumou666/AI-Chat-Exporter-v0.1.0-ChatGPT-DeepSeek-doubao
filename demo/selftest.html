@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>AI Chat Exporter — self test</title>
+  <link rel="stylesheet" href="../src/ui/panel.css">
+  <script>
+    // Collect page errors so a failure inside the content script is visible in
+    // the report instead of silently leaving the panel unmounted.
+    window.__aiceErrors = [];
+    window.addEventListener('error', function (event) {
+      window.__aiceErrors.push(String((event && (event.message || event.error)) || 'error'));
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      var reason = event && event.reason;
+      window.__aiceErrors.push('unhandledrejection: ' + ((reason && reason.message) || reason));
+    });
+  </script>
+</head>
+<body>
+  <h1>AI Chat Exporter — in-browser self test</h1>
+  <p>在本机浏览器中直接运行导出流水线的自检（不联网、不登录）。</p>
+  <pre id="selftest-results">running…</pre>
+  <p><strong>测试用模拟对话</strong>（必须可见，导出器会跳过 <code>display:none</code> 的内容）：</p>
+
+  <div id="fixture" style="max-width:720px;border:1px solid #e2e5e9;border-radius:8px;padding:0 16px 16px">
+    <div class="thread" style="padding-top:12px">
+      <div class="turn" style="padding:8px 0;border-bottom:1px solid #eef1f4">
+        <div class="bubble user" style="text-align: right; white-space: pre-wrap">怎么给列表去重？
+要求：保持顺序</div>
+      </div>
+      <div class="turn" style="padding:8px 0;border-bottom:1px solid #eef1f4">
+        <div class="markdown-body">
+          <p>用 <code>dict.fromkeys</code>：</p>
+          <pre><code class="language-python">unique = list(dict.fromkeys(items))</code></pre>
+          <table>
+            <thead><tr><th>方案</th><th>复杂度</th></tr></thead>
+            <tbody><tr><td>dict</td><td>O(n)</td></tr></tbody>
+          </table>
+          <p><img alt="chart" src="https://cdn.example.com/chart.png"></p>
+        </div>
+      </div>
+      <div class="turn" style="padding:8px 0;border-bottom:1px solid #eef1f4">
+        <div class="bubble user" style="text-align: right; white-space: pre-wrap">字典呢？</div>
+      </div>
+      <div class="turn" style="padding:8px 0">
+        <div class="markdown-body"><p>用元组做 key。</p></div>
+      </div>
+    </div>
+    <textarea placeholder="发送消息" style="width:100%;min-height:48px"></textarea>
+  </div>
+
+  <script src="../src/core/dom.js"></script>
+  <script src="../src/core/markdown.js"></script>
+  <script src="../src/core/engine.js"></script>
+  <script src="../src/core/schema.js"></script>
+  <script src="../src/core/serialize.js"></script>
+  <script src="../src/core/html.js"></script>
+  <script src="../src/core/range.js"></script>
+  <script src="../src/core/zip.js"></script>
+  <script src="../src/core/images.js"></script>
+  <script src="../src/core/download.js"></script>
+  <script src="../src/core/pdf.js"></script>
+  <script src="../src/core/i18n.js"></script>
+  <script src="../src/core/app.js"></script>
+  <script src="../src/platforms/chatgpt.js"></script>
+  <script src="../src/platforms/deepseek.js"></script>
+  <script src="../src/platforms/doubao.js"></script>
+  <script src="../src/platforms/generic.js"></script>
+  <script src="../src/platforms/index.js"></script>
+  <script src="../src/ui/panel.js"></script>
+  <script src="../src/content.js"></script>
+  <script>
+    (function () {
+      var NS = window.AIChatExporter;
+      var lines = [];
+      var failures = 0;
+
+      function check(name, fn) {
+        try {
+          var value = fn();
+          if (value === false) throw new Error('returned false');
+          lines.push('PASS  ' + name + (typeof value === 'string' ? ' :: ' + value : ''));
+        } catch (error) {
+          failures++;
+          lines.push('FAIL  ' + name + ' :: ' + (error && error.message ? error.message : error));
+        }
+      }
+
+      function assert(condition, message) {
+        if (!condition) throw new Error(message || 'assertion failed');
+      }
+
+      var fixture = document.getElementById('fixture');
+      var platform = NS.platforms.detect(location);
+      var extraction = NS.core.app.extract(document, { platform: platform, locale: 'zh-CN', reasoning: true, scope: { mode: 'full' } });
+      var conversation = extraction.conversation;
+
+      check('platform detection falls back to the generic adapter', function () {
+        assert(platform.id === 'generic', 'expected generic, got ' + platform.id);
+        return platform.id;
+      });
+
+      check('extraction finds the demo conversation', function () {
+        assert(conversation.messageCount === 4, 'expected 4 messages, got ' + conversation.messageCount);
+        var roles = conversation.messages.map(function (m) { return m.role; }).join(',');
+        assert(roles === 'user,assistant,user,assistant', 'unexpected roles: ' + roles);
+        return roles;
+      });
+
+      check('extraction ignores the composer textarea', function () {
+        var all = conversation.messages.map(function (m) { return m.markdown; }).join('\n');
+        assert(all.indexOf('发送消息') === -1, 'composer text leaked into the export');
+        return 'clean';
+      });
+
+      check('markdown keeps code fences, tables and line breaks', function () {
+        var md = NS.core.serialize.toMarkdown(conversation, { locale: 'zh-CN', toc: true });
+        assert(md.indexOf('```python') !== -1, 'missing python fence');
+        assert(md.indexOf('| 方案 | 复杂度 |') !== -1, 'missing table');
+        assert(md.indexOf('## 目录') !== -1, 'missing TOC');
+        assert(/？\s{0,2}\n\s*要求/.test(md), 'multi-line prompt was collapsed: ' + JSON.stringify(md.slice(md.indexOf('## 1.'), md.indexOf('## 2.'))));
+        return md.length + ' chars';
+      });
+
+      check('JSON export parses and validates', function () {
+        var json = NS.core.serialize.toJSON(conversation, {});
+        var parsed = JSON.parse(json);
+        var result = NS.core.schema.validate(parsed);
+        assert(result.ok, 'schema errors: ' + result.errors.join('; '));
+        return parsed.messages.length + ' messages';
+      });
+
+      check('print document (PDF path) is self contained', function () {
+        var html = NS.core.pdf.buildPrintDocument(conversation, { includeToc: true });
+        assert(html.indexOf('@page') !== -1, 'missing @page rule');
+        assert(html.indexOf('window.print()') !== -1, 'missing print trigger');
+        assert(html.indexOf('<code class="language-python">') !== -1, 'missing code block');
+        return html.length + ' chars';
+      });
+
+      check('markdown → HTML renderer handles tables and lists', function () {
+        var html = NS.core.html.markdownToHtml('- a\n  - b\n\n| x | y |\n| --- | --- |\n| 1 | 2 |');
+        assert(html.indexOf('<ul><li>a<ul><li>b</li></ul></li></ul>') !== -1, 'nested list broken');
+        assert(html.indexOf('<table>') !== -1, 'table broken');
+        return 'ok';
+      });
+
+      check('zip writer round trips through its own reader', function () {
+        var zip = NS.core.zip;
+        var bytes = zip.zipSync([{ name: 'aice/测试.md', data: '# hello' }, { name: 'images/x.png', data: new Uint8Array([1, 2, 3]) }]);
+        var names = zip.listEntries(bytes).map(function (entry) { return entry.name; }).join(',');
+        assert(names === 'aice/测试.md,images/x.png', 'unexpected entries: ' + names);
+        assert(zip.decodeUtf8(zip.readEntry(bytes, 'aice/测试.md')) === '# hello', 'content mismatch');
+        return bytes.length + ' bytes';
+      });
+
+      check('filename rendering sanitises unsafe characters', function () {
+        var name = NS.core.serialize.renderFilename('{platform}_{title}_{date}', conversation, 'md', { now: '2026-01-02T03:04:00' });
+        assert(!/[\\/:*?"<>|]/.test(name), 'unsafe filename: ' + name);
+        return name;
+      });
+
+      // The panel is mounted by content.js on DOMContentLoaded (and its
+      // storage read is asynchronous), so poll briefly before asserting.
+      function waitForPanel(done, attempts) {
+        var left = attempts === undefined ? 40 : attempts;
+        if (document.getElementById('aice-root')) { done(); return; }
+        if (left <= 0) { done(); return; }
+        setTimeout(function () { waitForPanel(done, left - 1); }, 25);
+      }
+
+      function checkRangePicker() {
+        check('range picker annotates each ordinal with the message text', function () {
+          var root = document.getElementById('aice-root');
+          assert(root, 'panel is not mounted (booted=' + String(window.__AICE_BOOTED__) + ', readyState=' + document.readyState + ')');
+          var select = root.querySelector('select');
+          var inputs = root.querySelectorAll('input[type="number"]');
+          select.value = 'range';
+          select.dispatchEvent(new Event('change'));
+          inputs[0].value = '2';
+          inputs[0].dispatchEvent(new Event('input'));
+          inputs[1].value = '4';
+          inputs[1].dispatchEvent(new Event('input'));
+
+          var preview = root.querySelector('.aice-range-preview');
+          assert(preview.className.indexOf('is-active') !== -1, 'preview is not visible');
+          var text = preview.textContent;
+          assert(text.indexOf('起始 #2') !== -1, 'missing from annotation: ' + text);
+          assert(text.indexOf('结束 #4') !== -1, 'missing to annotation: ' + text);
+          assert(text.indexOf('用元组做 key') !== -1, 'message #4 text is not previewed: ' + text);
+          assert(root.querySelector('.aice-range-summary').textContent.indexOf('共 3 条') !== -1, 'wrong range summary');
+
+          inputs[0].value = '99';
+          inputs[0].dispatchEvent(new Event('input'));
+          assert(root.querySelector('.aice-range-line').className.indexOf('is-invalid') !== -1, 'out-of-range not flagged');
+          return text.slice(0, 46);
+        });
+      }
+
+      function report() {
+        var errors = window.__aiceErrors || [];
+        if (errors.length) {
+          failures += errors.length;
+          errors.forEach(function (error) { lines.push('FAIL  page error :: ' + error); });
+        }
+        var text = lines.join('\n') + '\n\n' + (failures ? failures + ' FAILURE(S)' : 'ALL CHECKS PASSED');
+        document.getElementById('selftest-results').textContent = text;
+        document.title = failures ? 'SELFTEST FAILED' : 'SELFTEST OK';
+      }
+
+      function start() {
+        waitForPanel(function () {
+          checkRangePicker();
+          report();
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 0); });
+      } else {
+        setTimeout(start, 0);
+      }
+    })();
+  </script>
+</body>
+</html>

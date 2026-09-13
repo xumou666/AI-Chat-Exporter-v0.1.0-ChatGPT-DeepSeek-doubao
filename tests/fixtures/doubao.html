@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>帮我写一份周报 - 豆包</title>
+</head>
+<body>
+  <div class="app-container">
+    <div class="sidebar-container">
+      <div class="conversation-item active">帮我写一份周报</div>
+    </div>
+    <div class="chat-wrapper">
+      <div class="message-list" data-testid="message_list">
+        <div class="message-block" data-testid="message_block">
+          <div class="avatar-container"><img alt="我" src="https://p3.example.com/avatar-me.png"></div>
+          <div class="message-content" data-testid="send_message">
+            <div class="text-content" data-testid="message_text_content">帮我写一份本周工作周报，重点是接口性能优化。</div>
+          </div>
+        </div>
+        <div class="message-block" data-testid="message_block">
+          <div class="avatar-container"><img alt="豆包" src="https://p3.example.com/avatar-doubao.png"></div>
+          <div class="message-content" data-testid="receive_message">
+            <div class="markdown-body" data-testid="message_text_content">
+              <h3>本周工作周报</h3>
+              <p><strong>一、接口性能优化</strong></p>
+              <ul>
+                <li>订单查询接口 P99 从 820ms 降到 210ms</li>
+                <li>新增复合索引 3 个，慢查询数量下降 76%</li>
+              </ul>
+              <p><strong>二、下周计划</strong></p>
+              <ol>
+                <li>补齐压测基线</li>
+                <li>梳理缓存一致性方案</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="message-block" data-testid="message_block">
+          <div class="message-content" data-testid="send_message">
+            <div class="text-content" data-testid="message_text_content">再补充一段风险说明。</div>
+          </div>
+        </div>
+        <div class="message-block" data-testid="message_block">
+          <div class="message-content" data-testid="receive_message">
+            <div class="markdown-body" data-testid="message_text_content">
+              <p><strong>三、风险与依赖</strong></p>
+              <table>
+                <thead><tr><th>风险</th><th>影响</th><th>应对</th></tr></thead>
+                <tbody>
+                  <tr><td>索引变更需 DBA 审批</td><td>上线延后 1 天</td><td>提前提交工单</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-area" data-testid="chat_input_container">
+        <textarea data-testid="chat_input" placeholder="发消息给豆包"></textarea>
+        <button data-testid="chat_input_send_button">发送</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

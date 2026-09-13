@@ -1,0 +1,61 @@
+{
+  "schema": "ai-chat-exporter/conversation@1",
+  "platform": "chatgpt",
+  "platformLabel": "ChatGPT",
+  "title": "Python 列表去重",
+  "url": "https://chatgpt.com/c/abc123",
+  "conversationId": "abc123",
+  "model": null,
+  "createdAt": null,
+  "exportedAt": "2026-09-13T11:42:24.918Z",
+  "locale": "zh-CN",
+  "messageCount": 2,
+  "messages": [
+    {
+      "index": 0,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "如果元素是字典呢？",
+      "text": "如果元素是字典呢？",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 1,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "字典不可哈希，可以用 `json.dumps` 或元组做 key：\n\n```python\nseen = set()\nunique = []\nfor d in rows:\n    key = tuple(sorted(d.items()))\n    if key not in seen:\n        seen.add(key)\n        unique.append(d)\n```\n\n> 字典本身没有顺序，保序只对列表有意义。",
+      "text": "字典不可哈希，可以用 json.dumps 或元组做 key：\nseen = set()\nunique = []\nfor d in rows:\nkey = tuple(sorted(d.items()))\nif key not in seen:\nseen.add(key)\nunique.append(d)\n\n字典本身没有顺序，保序只对列表有意义。",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "reasoning": "用户问的是不可哈希元素，需要用 key 函数。",
+      "roleConfidence": "high"
+    }
+  ],
+  "meta": {
+    "exporter": {
+      "name": "AI Chat Exporter",
+      "version": "0.1.0",
+      "engine": "0.1.0"
+    },
+    "extraction": {
+      "strategy": "platform-selectors",
+      "hints": "chatgpt",
+      "rows": 4,
+      "calibrated": false
+    },
+    "warnings": [],
+    "scope": {
+      "mode": "range",
+      "from": 3,
+      "to": 4
+    }
+  }
+}

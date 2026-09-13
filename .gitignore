@@ -1,0 +1,4 @@
+node_modules/
+dist/
+*.log
+tests-last-run.txt

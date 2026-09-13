@@ -1,0 +1,84 @@
+{
+  "schema": "ai-chat-exporter/conversation@1",
+  "platform": "deepseek",
+  "platformLabel": "DeepSeek",
+  "title": "如何优化慢 SQL",
+  "url": "https://chat.deepseek.com/a/chat/s/9f8e7d6c",
+  "conversationId": "9f8e7d6c",
+  "model": null,
+  "createdAt": null,
+  "exportedAt": "2026-09-13T11:42:25.079Z",
+  "locale": "zh-CN",
+  "messageCount": 4,
+  "messages": [
+    {
+      "index": 0,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "线上有一条 SQL 很慢，怎么排查和优化？",
+      "text": "线上有一条 SQL 很慢，怎么排查和优化？",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "medium"
+    },
+    {
+      "index": 1,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "排查慢 SQL 一般分三步：\n\n1. 用 `EXPLAIN` 看执行计划\n2. 确认索引是否命中\n3. 检查回表与排序\n\n```sql\nEXPLAIN ANALYZE\nSELECT id, name FROM users WHERE email = 'a@b.com';\n```",
+      "text": "排查慢 SQL 一般分三步：\n\n用 EXPLAIN 看执行计划\n确认索引是否命中\n检查回表与排序\n\nEXPLAIN ANALYZE\nSELECT id, name FROM users WHERE email = 'a@b.com';",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "medium"
+    },
+    {
+      "index": 2,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "email 上没有索引，加索引会更快吗？",
+      "text": "email 上没有索引，加索引会更快吗？",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "medium"
+    },
+    {
+      "index": 3,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "会。等值查询加普通二级索引即可把全表扫描变成索引查找：\n\n```sql\nCREATE INDEX idx_users_email ON users (email);\n```\n\n注意写入放大与基数问题，低基数列（如性别）通常不值得建索引。",
+      "text": "会。等值查询加普通二级索引即可把全表扫描变成索引查找：\nCREATE INDEX idx_users_email ON users (email);\n注意写入放大与基数问题，低基数列（如性别）通常不值得建索引。",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "medium"
+    }
+  ],
+  "meta": {
+    "exporter": {
+      "name": "AI Chat Exporter",
+      "version": "0.1.0",
+      "engine": "0.1.0"
+    },
+    "extraction": {
+      "strategy": "repeated-siblings",
+      "hints": "deepseek",
+      "rows": 4,
+      "calibrated": false
+    },
+    "warnings": [],
+    "scope": {
+      "mode": "full"
+    }
+  }
+}

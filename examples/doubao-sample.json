@@ -1,0 +1,84 @@
+{
+  "schema": "ai-chat-exporter/conversation@1",
+  "platform": "doubao",
+  "platformLabel": "豆包",
+  "title": "帮我写一份周报",
+  "url": "https://www.doubao.com/chat/1234567890",
+  "conversationId": "1234567890",
+  "model": null,
+  "createdAt": null,
+  "exportedAt": "2026-09-13T11:42:25.157Z",
+  "locale": "zh-CN",
+  "messageCount": 4,
+  "messages": [
+    {
+      "index": 0,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "帮我写一份本周工作周报，重点是接口性能优化。",
+      "text": "帮我写一份本周工作周报，重点是接口性能优化。",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 1,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "### 本周工作周报\n\n**一、接口性能优化**\n\n- 订单查询接口 P99 从 820ms 降到 210ms\n- 新增复合索引 3 个，慢查询数量下降 76%\n\n**二、下周计划**\n\n1. 补齐压测基线\n2. 梳理缓存一致性方案",
+      "text": "本周工作周报\n一、接口性能优化\n\n订单查询接口 P99 从 820ms 降到 210ms\n新增复合索引 3 个，慢查询数量下降 76%\n\n二、下周计划\n\n补齐压测基线\n梳理缓存一致性方案",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 2,
+      "role": "user",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "再补充一段风险说明。",
+      "text": "再补充一段风险说明。",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    },
+    {
+      "index": 3,
+      "role": "assistant",
+      "author": null,
+      "model": null,
+      "createdAt": null,
+      "markdown": "**三、风险与依赖**\n\n| 风险 | 影响 | 应对 |\n| --- | --- | --- |\n| 索引变更需 DBA 审批 | 上线延后 1 天 | 提前提交工单 |",
+      "text": "三、风险与依赖\n\n风险影响应对\n\n索引变更需 DBA 审批上线延后 1 天提前提交工单",
+      "images": [],
+      "citations": [],
+      "attachments": [],
+      "roleConfidence": "high"
+    }
+  ],
+  "meta": {
+    "exporter": {
+      "name": "AI Chat Exporter",
+      "version": "0.1.0",
+      "engine": "0.1.0"
+    },
+    "extraction": {
+      "strategy": "platform-selectors",
+      "hints": "doubao",
+      "rows": 4,
+      "calibrated": false
+    },
+    "warnings": [],
+    "scope": {
+      "mode": "full"
+    }
+  }
+}
