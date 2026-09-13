@@ -57,7 +57,7 @@
 - **HTML / 纯文本**：自包含网页视图，或给不认 Markdown 的场景
 
 内容方案参考了开源项目 [Z2IRIM/Chat-Exporter-for-Chatgpt-Website](https://github.com/Z2IRIM/Chat-Exporter-for-Chatgpt-Website)
-（浮动按钮、部分导出、图片资源包、PDF 打印导出、工具调用开关、多语言）。本项目的差异在于：
+（浮动按钮、部分导出、PDF 打印导出）。本项目的差异在于：
 **多站点适配 + 通用启发式解析 + 页面结构自学习（手动校准）+ 完整测试与浏览器自检**。
 
 ## 功能特性
