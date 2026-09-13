@@ -80,7 +80,7 @@
 ### 1. 安装（Chrome / Edge，约 1 分钟）
 
 ```bash
-git clone https://github.com/<你的用户名>/<仓库名>.git
+git clone https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao.git
 # 也可以直接下载 ZIP 解压
 ```
 
