@@ -65,7 +65,7 @@
     userPatterns: [/send[_-]?message/i, /user/i, /right/i],
     assistantPatterns: [/receive[_-]?message/i, /message_text_content/i, /assistant/i, /markdown/i],
     userTestIdPatterns: [/send[_-]?message/i, /user/i],
-    assistantTestIdPatterns: [/receive[_-]?message/i, /message_text_content/i, /assistant/i],
+    assistantTestIdPatterns: [/receive[_-]?message/i, /assistant/i],
     userAvatarAlt: ['you', 'user', '我'],
     assistantAvatarAlt: ['豆包', 'doubao', 'assistant', 'ai'],
     ignoreSelectors: [

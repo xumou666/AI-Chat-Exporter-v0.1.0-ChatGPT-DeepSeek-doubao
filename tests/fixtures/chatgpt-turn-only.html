@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>没有 author-role 属性的 ChatGPT 页面</title>
+</head>
+<body>
+  <!--
+    复现用例：真实站点上 `data-message-author-role` 有时缺失/改名，行上只剩
+    `data-testid="conversation-turn-N"`。这类 testid 只标识"第几轮"，不标识角色，
+    因此不能拿它判定 assistant。
+  -->
+  <main>
+    <div id="thread">
+      <article data-testid="conversation-turn-1">
+        <div class="whitespace-pre-wrap">怎么把这个扩展装到 Edge 上？</div>
+      </article>
+      <article data-testid="conversation-turn-2">
+        <div class="markdown prose">
+          <p>打开 <code>edge://extensions</code>，开启开发者模式后加载已解压的扩展即可。</p>
+        </div>
+      </article>
+      <article data-testid="conversation-turn-3">
+        <div class="whitespace-pre-wrap">导出 PDF 需要联网吗？</div>
+      </article>
+      <article data-testid="conversation-turn-4">
+        <div class="markdown prose">
+          <p>不需要，PDF 走浏览器自带的打印功能。</p>
+        </div>
+      </article>
+    </div>
+    <div id="composer-background"><textarea placeholder="Message ChatGPT"></textarea></div>
+  </main>
+</body>
+</html>

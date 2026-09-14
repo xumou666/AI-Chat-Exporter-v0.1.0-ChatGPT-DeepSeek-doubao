@@ -7,7 +7,7 @@
   "conversationId": "9f8e7d6c",
   "model": null,
   "createdAt": null,
-  "exportedAt": "2026-09-14T08:47:59.990Z",
+  "exportedAt": "2026-09-14T09:13:36.085Z",
   "locale": "zh-CN",
   "messageCount": 4,
   "messages": [
@@ -67,7 +67,7 @@
   "meta": {
     "exporter": {
       "name": "AI Chat Exporter",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "engine": "0.1.0"
     },
     "extraction": {

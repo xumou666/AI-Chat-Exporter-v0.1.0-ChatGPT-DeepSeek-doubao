@@ -237,6 +237,11 @@
     function describeOption(entry) {
       var locale = settings.locale || core.i18n.locale();
       var role = core.schema.roleEmoji(entry.role) + ' ' + core.schema.roleLabel(entry.role, locale);
+      // Show when the role was inferred rather than read from the page, so a
+      // wrong user/assistant split is visible before exporting.
+      if (entry.confidence === 'low' || entry.confidence === 'none') {
+        role += '（' + t('roleInferred') + '）';
+      }
       return role + ' · ' + (entry.preview || t('rangeNoPreview'));
     }
 
@@ -352,6 +357,23 @@
       status.className = 'aice-status' + (kind ? ' is-' + kind : '');
     }
 
+    function describeWarning(code) {
+      var value = String(code == null ? '' : code);
+      var match = value.match(/^low-confidence-rows:(\d+)$/);
+      if (match) return t('warning_lowConfidence', { count: match[1] });
+      match = value.match(/^roles-alternation-repaired:(\d+)$/);
+      if (match) return t('warningRolesRepaired', { count: match[1] });
+      var table = {
+        'no-message-rows-detected': 'warning_noMessageRows',
+        'all-rows-empty': 'warning_allRowsEmpty',
+        'roles-inferred-by-alternation': 'warning_rolesAlternation',
+        'some-roles-inferred': 'warning_someRoles',
+        'roles-uniform-reset': 'warningRolesUniformReset',
+        'custom-rules-found-nothing': 'warning_noMessageRows'
+      };
+      return table[value] ? t(table[value]) : value;
+    }
+
     function setDiagnostics(info) {
       if (!info) { diagPre.textContent = '—'; return; }
       var lines = [];
@@ -363,7 +385,7 @@
       }
       if (info.warnings && info.warnings.length) {
         lines.push(t('warnings') + ':');
-        info.warnings.forEach(function (warning) { lines.push('  - ' + warning); });
+        info.warnings.forEach(function (warning) { lines.push('  - ' + describeWarning(warning)); });
       }
       diagPre.textContent = lines.join('\n');
     }

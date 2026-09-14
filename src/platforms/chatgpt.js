@@ -68,7 +68,7 @@
     userPatterns: [/user-message/i, /data-turn=["']?user/i, /\buser\b/i],
     assistantPatterns: [/assistant/i, /\bmarkdown\b/i, /prose/i],
     userTestIdPatterns: [/user[-_ ]?message/i],
-    assistantTestIdPatterns: [/assistant/i, /conversation-turn/i],
+    assistantTestIdPatterns: [/assistant/i],
     userAvatarAlt: ['you', 'user'],
     assistantAvatarAlt: ['chatgpt', 'gpt', 'assistant', 'openai'],
     ignoreSelectors: [

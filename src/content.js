@@ -94,17 +94,27 @@
     return extraction;
   }
 
+  /** Role evidence was inferred rather than read from the page. */
+  function rolesUncertain(warnings) {
+    return (warnings || []).some(function (code) {
+      return /^roles-|^some-roles-inferred$|^low-confidence-rows:/.test(String(code));
+    });
+  }
+
+  function statusFor(extraction) {
+    var count = extraction.conversation.messageCount;
+    var text = t('found', { count: count, platform: platform.label || platform.id });
+    if (rolesUncertain(extraction.warnings)) text += ' · ⚠ ' + t('rolesMayBeWrong');
+    return text;
+  }
+
   function reportExtraction(extraction) {
     var count = extraction.conversation.messageCount;
     if (!count) {
       panel.setStatus(t('notFound'), 'error');
       return false;
     }
-    panel.setStatus(t('found', { count: count, platform: platform.label || platform.id }), 'ok');
-    if (extraction.warnings && extraction.warnings.length) {
-      panel.setStatus(t('found', { count: count, platform: platform.label || platform.id }) +
-        ' — ' + extraction.warnings.length + ' warning(s)', 'ok');
-    }
+    panel.setStatus(statusFor(extraction), rolesUncertain(extraction.warnings) ? 'error' : 'ok');
     return true;
   }
 
@@ -247,10 +257,7 @@
 
       var extraction = refreshDiagnostics();
       if (extraction && extraction.conversation.messageCount) {
-        panel.setStatus(t('ready') + ' · ' + t('found', {
-          count: extraction.conversation.messageCount,
-          platform: platform.label || platform.id
-        }));
+        panel.setStatus(t('ready') + ' · ' + statusFor(extraction), rolesUncertain(extraction.warnings) ? 'error' : 'ok');
       } else {
         panel.setStatus(t('notFound'));
       }

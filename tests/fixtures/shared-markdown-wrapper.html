@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>共享 markdown 容器的聊天页</title>
+</head>
+<body>
+  <!--
+    复现用例：消息列表外层容器类名里带 markdown-body，而每行自身没有任何角色线索。
+    角色判定若向上找祖先类名，就会把"每一行"都判成 assistant。
+  -->
+  <div class="app">
+    <div class="markdown-body messages">
+      <div class="row left">
+        <div class="bubble-plain">帮我看看这个报错</div>
+      </div>
+      <div class="row right">
+        <div class="bubble-plain">
+          <p>这是典型的空指针，检查一下初始化顺序。</p>
+          <pre><code class="language-js">if (!client) throw new Error('not ready')</code></pre>
+        </div>
+      </div>
+      <div class="row left">
+        <div class="bubble-plain">那要加锁吗？</div>
+      </div>
+      <div class="row right">
+        <div class="bubble-plain"><p>单线程事件循环里不需要，注意 await 顺序即可。</p></div>
+      </div>
+    </div>
+    <div class="composer"><textarea placeholder="输入消息"></textarea></div>
+  </div>
+</body>
+</html>

@@ -43,6 +43,17 @@
   /** Marker every element of the exporter's own UI carries. */
   var UI_SELECTOR = '[data-aice-ui]';
 
+  /** Rendered-markdown containers: assistant answers carry one, user bubbles do not. */
+  var MARKDOWN_CONTAINER_SELECTORS = [
+    '[class*="markdown" i]',
+    '[class*="ds-markdown" i]',
+    '.prose',
+    '[class*="prose" i]'
+  ];
+
+  /** Rich blocks that only model output usually produces. */
+  var RICH_CONTENT_SELECTORS = ['pre', 'code', 'table', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'blockquote'];
+
   /** True for the exporter's own panel/FAB — it must never be exported. */
   function insideUi(el) {
     if (!el || !el.closest) return false;
@@ -230,43 +241,121 @@
     return null;
   }
 
-  function roleFromTestIds(row, hints) {
+  function matchesAnyPattern(haystack, patterns) {
+    if (!haystack || !patterns) return false;
+    for (var i = 0; i < patterns.length; i++) {
+      var pattern = patterns[i];
+      if (!pattern) continue;
+      if (pattern instanceof RegExp) {
+        pattern.lastIndex = 0;
+        if (pattern.test(haystack)) return true;
+      } else if (haystack.toLowerCase().indexOf(String(pattern).toLowerCase()) !== -1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * A testid pattern that matches *every* row cannot distinguish roles — it names
+   * the container ("conversation-turn-3", "message-12"), not the speaker. Drop it.
+   */
+  function effectiveTestIdPatterns(patterns, rows) {
+    if (!patterns || !patterns.length) return [];
+    return patterns.filter(function (pattern) {
+      if (!(pattern instanceof RegExp) || rows.length < 2) return true;
+      var matchesEveryRow = rows.every(function (row) {
+        var value = (row.getAttribute && (row.getAttribute('data-testid') || row.getAttribute('data-test-id'))) || '';
+        if (!value) return false;
+        pattern.lastIndex = 0;
+        return pattern.test(value);
+      });
+      return !matchesEveryRow;
+    });
+  }
+
+  /**
+   * Evidence that is shared by several rows (a common wrapper) can never tell the
+   * rows apart, so class-based matching must ignore those ancestors. Testid
+   * patterns that match every row are filtered out for the same reason.
+   */
+  function buildRoleContext(rows, hints) {
+    var ancestorCounts = new Map();
+    for (var i = 0; i < rows.length; i++) {
+      var ancestors = dom.ancestors(rows[i]);
+      for (var a = 0; a < ancestors.length; a++) {
+        var ancestor = ancestors[a];
+        ancestorCounts.set(ancestor, (ancestorCounts.get(ancestor) || 0) + 1);
+      }
+    }
+    var shared = new Set();
+    ancestorCounts.forEach(function (count, element) {
+      if (count >= 2) shared.add(element);
+    });
+    return {
+      sharedAncestors: shared,
+      userTestIds: effectiveTestIdPatterns(hints.userTestIdPatterns, rows),
+      assistantTestIds: effectiveTestIdPatterns(hints.assistantTestIdPatterns, rows)
+    };
+  }
+
+  function roleFromTestIds(row, hints, context) {
+    var userPatterns = context ? context.userTestIds : hints.userTestIdPatterns;
+    var assistantPatterns = context ? context.assistantTestIds : hints.assistantTestIdPatterns;
     var scope = [row];
     var descendants = row.querySelectorAll ? row.querySelectorAll('[data-testid], [data-test-id], [class]') : [];
     for (var i = 0; i < descendants.length && scope.length < 40; i++) scope.push(descendants[i]);
     for (var s = 0; s < scope.length; s++) {
       var el = scope[s];
       var testId = (el.getAttribute && (el.getAttribute('data-testid') || el.getAttribute('data-test-id'))) || '';
-      if (testId) {
-        for (var u = 0; u < hints.userTestIdPatterns.length; u++) {
-          if (hints.userTestIdPatterns[u].test(testId)) return { role: 'user', reason: 'data-testid~' + testId, confidence: 'high' };
-        }
-        for (var a = 0; a < hints.assistantTestIdPatterns.length; a++) {
-          if (hints.assistantTestIdPatterns[a].test(testId)) return { role: 'assistant', reason: 'data-testid~' + testId, confidence: 'high' };
-        }
+      if (!testId) continue;
+      for (var u = 0; u < userPatterns.length; u++) {
+        if (userPatterns[u].test(testId)) return { role: 'user', reason: 'data-testid~' + testId, confidence: 'high' };
+      }
+      for (var a = 0; a < assistantPatterns.length; a++) {
+        if (assistantPatterns[a].test(testId)) return { role: 'assistant', reason: 'data-testid~' + testId, confidence: 'high' };
       }
     }
     return null;
   }
 
-  function roleFromClass(row, hints) {
-    // The row itself first, then its ancestors (message wrappers often carry the role class).
-    var chain = [row].concat(dom.ancestors(row, 4));
+  function roleFromClass(row, hints, context, options) {
+    // The row itself first; ancestors only when allowed, because a wrapper shared
+    // by many rows (e.g. class="markdown-body") would label every one of them.
+    var allowAncestors = !options || options.allowAncestors !== false;
+    var chain = allowAncestors ? [row].concat(dom.ancestors(row, 4)) : [row];
     for (var i = 0; i < chain.length; i++) {
       var el = chain[i];
+      if (el !== row && context && context.sharedAncestors && context.sharedAncestors.has(el)) continue;
       var haystack = [dom.classString(el), el.getAttribute && (el.getAttribute('data-testid') || ''), el.getAttribute && (el.getAttribute('aria-label') || '')].join(' ');
       if (!haystack.trim()) continue;
-      for (var a = 0; a < hints.assistantPatterns.length; a++) {
-        if (hints.assistantPatterns[a].test(haystack)) {
-          for (var u = 0; u < hints.userPatterns.length; u++) {
-            if (hints.userPatterns[u].test(haystack)) break;
-            if (u === hints.userPatterns.length - 1) return { role: 'assistant', reason: 'class~' + haystack.trim().slice(0, 40), confidence: 'medium' };
-          }
-        }
-      }
-      for (var u2 = 0; u2 < hints.userPatterns.length; u2++) {
-        if (hints.userPatterns[u2].test(haystack)) return { role: 'user', reason: 'class~' + haystack.trim().slice(0, 40), confidence: 'medium' };
-      }
+      var saysUser = matchesAnyPattern(haystack, hints.userPatterns);
+      var saysAssistant = matchesAnyPattern(haystack, hints.assistantPatterns);
+      if (saysUser === saysAssistant) continue; // no signal, or ambiguous evidence
+      return {
+        role: saysUser ? 'user' : 'assistant',
+        reason: 'class~' + haystack.trim().slice(0, 40),
+        confidence: 'medium'
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Last structural resort before guessing: assistant answers carry rendered
+   * markdown containers or rich blocks, while a short plain bubble is usually a
+   * human prompt. Weaker than attributes/testids, so it never overrides them.
+   */
+  function roleFromContentShape(row, hints) {
+    if (dom.queryAll(row, MARKDOWN_CONTAINER_SELECTORS).length) {
+      return { role: 'assistant', reason: 'markdown-container', confidence: 'medium' };
+    }
+    if (dom.queryAll(row, RICH_CONTENT_SELECTORS).length) {
+      return { role: 'assistant', reason: 'rich-content', confidence: 'medium' };
+    }
+    var text = dom.textOf(row, hints.ignoreSelectors);
+    if (text && text.length <= 240) {
+      return { role: 'user', reason: 'plain-short', confidence: 'low' };
     }
     return null;
   }
@@ -307,14 +396,23 @@
     return null;
   }
 
-  function classifyRow(row, hints) {
-    var attempts = [roleFromAttributes, roleFromTestIds, roleFromClass, roleFromAvatar];
-    for (var i = 0; i < attempts.length; i++) {
-      var result = attempts[i](row, hints);
+  function classifyRow(row, hints, context) {
+    // Pass 1 — evidence carried by the row itself (or its own subtree).
+    var rowLocal = [roleFromAttributes, roleFromTestIds, roleFromAvatar];
+    for (var i = 0; i < rowLocal.length; i++) {
+      var result = rowLocal[i](row, hints, context);
       if (result) return result;
     }
+    var localClass = roleFromClass(row, hints, context, { allowAncestors: false });
+    if (localClass) return localClass;
+    var shape = roleFromContentShape(row, hints);
+    if (shape) return shape;
     var layout = roleFromLayout(row);
     if (layout) return layout;
+
+    // Pass 2 — wrapping elements, excluding wrappers shared by several rows.
+    var ancestorClass = roleFromClass(row, hints, context, { allowAncestors: true });
+    if (ancestorClass) return ancestorClass;
     return { role: null, reason: 'unknown', confidence: 'none' };
   }
 
@@ -344,17 +442,61 @@
   }
 
   /**
+   * Repairs two failure modes that produce a flipped transcript:
+   *  - every row classified the same way (systematic, not per-row evidence);
+   *  - a weak row breaking the strict user/assistant alternation.
+   */
+  function repairRoles(classified) {
+    var flags = [];
+    var classifiedCount = classified.filter(function (info) { return !!info.role; }).length;
+
+    if (classified.length >= 2 && classifiedCount === classified.length) {
+      var first = classified[0].role;
+      var uniform = classified.every(function (info) { return info.role === first; });
+      if (uniform) {
+        flags.push('roles-uniform-reset');
+        var reset = classified.map(function () {
+          return { role: null, reason: 'uniform-reset', confidence: 'none' };
+        });
+        return { roles: fillUnknownRoles(reset), flags: flags };
+      }
+    }
+
+    var flipped = 0;
+    for (var i = 1; i < classified.length; i++) {
+      var current = classified[i];
+      var previous = classified[i - 1];
+      if (!current.role || current.role !== previous.role) continue;
+      var weak = null;
+      if (current.confidence === 'low' && previous.confidence !== 'low') weak = i;
+      else if (previous.confidence === 'low' && current.confidence !== 'low') weak = i - 1;
+      else if (current.confidence === 'low') weak = i;
+      if (weak === null) continue;
+      classified[weak] = {
+        role: classified[weak].role === 'user' ? 'assistant' : 'user',
+        reason: 'alternation-repair',
+        confidence: 'low'
+      };
+      flipped++;
+    }
+    if (flipped) flags.push('roles-alternation-repaired:' + flipped);
+
+    return { roles: classified, flags: flags };
+  }
+
+  /**
    * Assign a role to every row. Rows with no signal fall back to strict
    * alternation seeded by the nearest known neighbour.
    */
   function assignRoles(rows, hints) {
+    var context = buildRoleContext(rows, hints);
     var classified = rows.map(function (row) {
-      var info = classifyRow(row, hints);
+      var info = classifyRow(row, hints, context);
       return { role: info.role || null, reason: info.reason, confidence: info.confidence };
     });
     var known = classified.filter(function (info) { return !!info.role; }).length;
-    fillUnknownRoles(classified);
-    return { roles: classified, knownRoles: known };
+    var repaired = repairRoles(classified);
+    return { roles: repaired.roles, knownRoles: known, roleFlags: repaired.flags };
   }
 
   /** Removes ancestors/descendants duplicates, keeping the innermost matches. */
@@ -597,6 +739,7 @@
     return {
       messages: messages,
       knownRoles: assigned.knownRoles,
+      roleFlags: assigned.roleFlags || [],
       rowCount: rows.length,
       emptyRows: failures
     };
@@ -757,6 +900,8 @@
     }
 
     if (extraction.messages.length === 0) warnings.push('all-rows-empty');
+    var roleFlags = extraction.roleFlags || [];
+    for (var f = 0; f < roleFlags.length; f++) warnings.push(roleFlags[f]);
     if (extraction.knownRoles === 0 && extraction.messages.length > 1) warnings.push('roles-inferred-by-alternation');
     else if (typeof extraction.knownRoles === 'number' && extraction.knownRoles < extraction.messages.length) warnings.push('some-roles-inferred');
     var lowConfidence = extraction.messages.filter(function (message) { return message.roleConfidence === 'low'; }).length;
@@ -780,8 +925,9 @@
   function debugCandidates(doc, platform) {
     var hints = mergeHints(platform);
     var detection = detectRows(doc, hints);
+    var context = buildRoleContext(detection.rows, hints);
     var preview = detection.rows.slice(0, 12).map(function (row, index) {
-      var info = classifyRow(row, hints);
+      var info = classifyRow(row, hints, context);
       return {
         index: index,
         signature: dom.signatureOf(row),

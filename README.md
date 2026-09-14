@@ -4,11 +4,11 @@
 纯本地运行的 Chrome / Edge 扩展（Manifest V3），无后端、无账号、无运行时依赖。
 
 [![CI](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml/badge.svg)](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)
+![tests](https://img.shields.io/badge/tests-65%20passed-brightgreen)
 ![manifest](https://img.shields.io/badge/manifest-v3-blue)
 ![platform](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-blue)
 ![deps](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
-[![version](https://img.shields.io/badge/version-0.1.1-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.2-blue)](CHANGELOG.md)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 <!--
@@ -205,6 +205,19 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 </details>
 
 <details>
+<summary><b>导出后发现用户/助手角色颠倒了怎么办？</b></summary>
+
+从 0.1.2 起，判不准的角色会在面板里显式标出来：
+
+1. **看标注**：范围预览里出现 `👤 用户（角色为推断）`，或状态栏出现 `⚠ 角色可能判断有误`，说明这条角色不是从页面直接读到的，而是推断出来的。
+2. **看依据**：展开「结构诊断」，每行都带来源与置信度（`high` = 读到 `data-*` 属性 / testid；`medium` = 类名或 markdown 容器线索；`low` = 交替推断或修正过）。
+3. **修正**：点「手动校准」，先点一条用户消息、再点一条助手消息；导出器会学习该页面的结构并在后续导出中优先使用。
+4. 仍不对就带上面板里的诊断文本开 issue。
+
+判定规则本身也做了加固：能匹配全部消息行的 testid 会被忽略（它命名的是"第几轮"，不是说话人）、被多行共享的外层容器不再当作角色依据、首条消息是助手时不再假设"第一条一定是用户"，并且全部被判成同一角色时会回退到「用户/助手」交替推断。
+</details>
+
+<details>
 <summary><b>长对话只导出后一半？</b></summary>
 
 页面采用虚拟滚动，没渲染的消息不在 DOM 里。请先向上滚动把历史加载完（或分段导出后合并）。
@@ -228,7 +241,7 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 
 ```bash
 npm install          # 只装测试用的 jsdom（扩展运行时不依赖任何包）
-npm test             # 59 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
+npm test             # 65 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
 npm run examples     # 重新生成 examples/
 npm run screenshots  # 用本机 Chrome/Edge 重新生成 docs/images/（可用 AICE_BROWSER 指定路径）
 npm run icons        # 重新生成 assets/icon*.png
@@ -272,7 +285,7 @@ src/platforms/*.js          ChatGPT / DeepSeek / 豆包 / 通用适配器 + 注�
 src/ui/panel.js, panel.css  页面内浮动面板
 src/content.js              内容脚本入口（装配 + 下载 + 校准 + 消息接口）
 src/background.js           Service Worker（工具栏点击 / 按需注入）
-tests/                      jsdom 测试（59 项）与 HTML 夹具
+tests/                      jsdom 测试（65 项）与 HTML 夹具
 tools/                      图标、样例、截图、打包脚本
 examples/                   真实导出样例
 docs/                       使用教程与截图
@@ -281,7 +294,7 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ## 更新日志
 
-版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.1**（2026-09-13）。
+版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.2**（2026-09-14）。
 
 发版时版本号出现在三处，`tests/manifest.test.js` 会校验它们一致，避免"扩展显示一个版本、导出文件里写着另一个"：
 
@@ -295,9 +308,9 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ```bash
 npm test
-git commit -am "chore(release): v0.1.2"
+git commit -am "chore(release): v0.1.3"
 git push
-git tag v0.1.2 && git push origin v0.1.2
+git tag v0.1.3 && git push origin v0.1.3
 ```
 
 推送 tag 后 [`release.yml`](.github/workflows/release.yml) 会自动跑测试、用 `npm run package` 打包扩展，

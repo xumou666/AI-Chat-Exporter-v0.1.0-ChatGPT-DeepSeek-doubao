@@ -7,7 +7,7 @@
   "conversationId": null,
   "model": null,
   "createdAt": null,
-  "exportedAt": "2026-09-14T08:48:00.170Z",
+  "exportedAt": "2026-09-14T09:13:36.246Z",
   "locale": "zh-CN",
   "messageCount": 4,
   "messages": [
@@ -35,7 +35,7 @@
       "images": [],
       "citations": [],
       "attachments": [],
-      "roleConfidence": "low"
+      "roleConfidence": "medium"
     },
     {
       "index": 2,
@@ -61,13 +61,13 @@
       "images": [],
       "citations": [],
       "attachments": [],
-      "roleConfidence": "low"
+      "roleConfidence": "medium"
     }
   ],
   "meta": {
     "exporter": {
       "name": "AI Chat Exporter",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "engine": "0.1.0"
     },
     "extraction": {
@@ -77,8 +77,7 @@
       "calibrated": false
     },
     "warnings": [
-      "roles-inferred-by-alternation",
-      "low-confidence-rows:4"
+      "low-confidence-rows:2"
     ],
     "scope": {
       "mode": "full"

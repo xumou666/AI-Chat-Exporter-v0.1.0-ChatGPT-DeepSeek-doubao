@@ -178,7 +178,7 @@
           var inputs = root.querySelectorAll('input[type="number"]');
           select.value = 'range';
           select.dispatchEvent(new Event('change'));
-          inputs[0].value = '2';
+          inputs[0].value = '1';
           inputs[0].dispatchEvent(new Event('input'));
           inputs[1].value = '4';
           inputs[1].dispatchEvent(new Event('input'));
@@ -186,10 +186,11 @@
           var preview = root.querySelector('.aice-range-preview');
           assert(preview.className.indexOf('is-active') !== -1, 'preview is not visible');
           var text = preview.textContent;
-          assert(text.indexOf('起始 #2') !== -1, 'missing from annotation: ' + text);
+          assert(text.indexOf('起始 #1') !== -1, 'missing from annotation: ' + text);
           assert(text.indexOf('结束 #4') !== -1, 'missing to annotation: ' + text);
           assert(text.indexOf('用元组做 key') !== -1, 'message #4 text is not previewed: ' + text);
-          assert(root.querySelector('.aice-range-summary').textContent.indexOf('共 3 条') !== -1, 'wrong range summary');
+          assert(text.indexOf('角色为推断') !== -1, 'inferred roles must be marked in the preview: ' + text);
+          assert(root.querySelector('.aice-range-summary').textContent.indexOf('共 4 条') !== -1, 'wrong range summary');
 
           inputs[0].value = '99';
           inputs[0].dispatchEvent(new Event('input'));

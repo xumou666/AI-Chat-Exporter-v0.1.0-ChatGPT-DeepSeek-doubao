@@ -21,7 +21,7 @@ They show exactly what the extension writes for each supported site.
 | `doubao-sample.html` | 5197 |
 | `doubao-print.html` | 5539 |
 | `generic-sample.md` | 994 |
-| `generic-sample.json` | 2490 |
+| `generic-sample.json` | 2457 |
 | `generic-sample.html` | 4804 |
 | `generic-print.html` | 5146 |
 

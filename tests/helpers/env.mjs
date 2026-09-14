@@ -38,9 +38,12 @@ export const ALL_FILES = [...CORE_FILES, ...PLATFORM_FILES, ...PANEL_FILES, ...B
 
 export const DEFAULT_URLS = {
   'chatgpt.html': 'https://chatgpt.com/c/abc123',
+  'chatgpt-turn-only.html': 'https://chatgpt.com/c/def456',
   'deepseek.html': 'https://chat.deepseek.com/a/chat/s/9f8e7d6c',
   'doubao.html': 'https://www.doubao.com/chat/1234567890',
-  'generic-random.html': 'https://somechat.example.com/t/42'
+  'generic-random.html': 'https://somechat.example.com/t/42',
+  'shared-markdown-wrapper.html': 'https://somechat.example.com/t/7',
+  'no-role-signals.html': 'https://somechat.example.com/t/8'
 };
 
 export function readFixture(name) {

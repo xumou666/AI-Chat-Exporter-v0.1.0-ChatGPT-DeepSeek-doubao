@@ -22,6 +22,7 @@
         index: index,
         ordinal: index + 1,
         role: message.role,
+        confidence: message.roleConfidence || 'none',
         label: (index + 1) + '. ' + schema.roleLabel(message.role, locale || 'zh-CN'),
         preview: preview(message, previewLength)
       };

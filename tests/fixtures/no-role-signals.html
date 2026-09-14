@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>完全没有角色线索的聊天页</title>
+</head>
+<body>
+  <!--
+    复现用例：第一行就是助手的长回答（例如开场问候/总结），DOM 里没有任何角色线索。
+    此时"默认第一条是用户"的交替推断会把整段对话的角色全部颠倒。
+  -->
+  <div class="sc-1x9z2k">
+    <div class="sc-q81mz">
+      <div class="sc-31bb">
+        <p>下面是本次排查的结论：</p>
+        <pre><code class="language-bash">git bisect start</code></pre>
+      </div>
+    </div>
+    <div class="sc-q81mz">
+      <div class="sc-77aa" style="text-align: right">那我先回滚到上一个版本试试。</div>
+    </div>
+    <div class="sc-q81mz">
+      <div class="sc-31bb"><p>可以，回滚后记得重新加载扩展。</p></div>
+    </div>
+    <div class="sc-q81mz">
+      <div class="sc-77aa" style="text-align: right">好，我去试。</div>
+    </div>
+  </div>
+</body>
+</html>
