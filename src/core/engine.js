@@ -54,6 +54,12 @@
   /** Rich blocks that only model output usually produces. */
   var RICH_CONTENT_SELECTORS = ['pre', 'code', 'table', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'blockquote'];
 
+  /**
+   * Regions that hold navigation rather than the conversation: the history
+   * sidebar lists other conversations and must never be exported.
+   */
+  var NON_CONVERSATION_REGION = 'nav, aside, [role="navigation"], [class*="sidebar" i], [class*="history" i], [class*="conversation-list" i], [class*="session-list" i]';
+
   /** True for the exporter's own panel/FAB — it must never be exported. */
   function insideUi(el) {
     if (!el || !el.closest) return false;
@@ -131,7 +137,7 @@
     userAvatarAlt: ['you', 'user', 'me', '你', '我'],
     assistantAvatarAlt: ['chatgpt', 'gpt', 'assistant', 'ai', 'claude', 'gemini', 'deepseek', 'doubao', '豆包', '助手'],
     minRowTextLength: 1,
-    minGroupTextLength: 60,
+    minGroupTextLength: 24,
     ignoreSelectors: []
   };
 
@@ -521,9 +527,143 @@
   function isUsableRow(row, hints) {
     if (!dom.isVisible(row)) return false;
     if (insideUi(row)) return false;
+    if (insideNonConversationRegion(row)) return false;
     if (row.matches && row.matches(ROW_BLOCKLIST)) return false;
     if (rowTextLength(row, hints) < hints.minRowTextLength) return false;
     return true;
+  }
+
+  /** True when an ancestor (never the row itself) belongs to navigation chrome. */
+  function insideNonConversationRegion(el) {
+    var node = el && el.parentElement;
+    var depth = 0;
+    while (node && depth < 12) {
+      if (node.matches) {
+        try {
+          if (node.matches(NON_CONVERSATION_REGION)) return true;
+        } catch (err) { /* invalid selector: ignore */ }
+      }
+      node = node.parentElement;
+      depth++;
+    }
+    return false;
+  }
+
+  /**
+   * Number of nested repeated rows a candidate row contains. A message row has
+   * none; a conversation container wrapping a whole message list has several —
+   * treating it as a "message" is how one conversation gets exported as two.
+   */
+  function nestedRowCount(row, hints) {
+    if (!row.children || row.children.length < 2) return 0;
+    var groups = new Map();
+    for (var i = 0; i < row.children.length; i++) {
+      var child = row.children[i];
+      if (!dom.isVisible(child)) continue;
+      if (rowTextLength(child, hints) < hints.minRowTextLength) continue;
+      var signature = dom.signatureOf(child);
+      groups.set(signature, (groups.get(signature) || 0) + 1);
+    }
+    var most = 0;
+    groups.forEach(function (count) { if (count > most) most = count; });
+    return most >= 2 ? most : 0;
+  }
+
+  /** Cheap "user-like vs assistant-like" read used to tell conversations apart. */
+  function rowKind(row) {
+    if (dom.queryAll(row, MARKDOWN_CONTAINER_SELECTORS).length) return 'assistant';
+    if (dom.queryAll(row, RICH_CONTENT_SELECTORS).length) return 'assistant';
+    return 'user';
+  }
+
+  function nearestCommonAncestor(rows) {
+    if (!rows.length) return null;
+    var current = rows[0];
+    for (var i = 1; i < rows.length; i++) {
+      var node = current;
+      while (node && node.contains && !node.contains(rows[i])) node = node.parentElement;
+      current = node || current;
+    }
+    return current;
+  }
+
+  function clusterRowsByContainer(rows) {
+    var clusters = [];
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var target = null;
+      for (var c = 0; c < clusters.length; c++) {
+        var container = clusters[c].container;
+        if (!container) continue;
+        if (container.contains(row) || (row.contains && row.contains(container))) { target = clusters[c]; break; }
+      }
+      if (target) {
+        target.rows.push(row);
+        target.container = nearestCommonAncestor(target.rows);
+      } else {
+        clusters.push({ container: row.parentElement || row, rows: [row] });
+      }
+    }
+    var merged = [];
+    for (var m = 0; m < clusters.length; m++) {
+      var placed = false;
+      for (var n = 0; n < merged.length; n++) {
+        var a = merged[n].container;
+        var b = clusters[m].container;
+        if (a === b || (a && b && (a.contains(b) || b.contains(a)))) {
+          merged[n].rows = merged[n].rows.concat(clusters[m].rows);
+          merged[n].container = nearestCommonAncestor(merged[n].rows);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) merged.push({ container: clusters[m].container, rows: clusters[m].rows.slice() });
+    }
+    return merged;
+  }
+
+  function isInViewport(el) {
+    var doc = el.ownerDocument;
+    if (!dom.hasLayout(doc)) return 0;
+    var win = doc.defaultView;
+    if (!win || typeof el.getBoundingClientRect !== 'function') return 0;
+    var rect = el.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < (win.innerHeight || 0) ? 1 : 0;
+  }
+
+  /**
+   * Several conversations can coexist in the DOM (SPA switching keeps the old
+   * one mounted). Keep a single conversation and report what was dropped:
+   * prefer what is on screen, then the richer set, then the later one.
+   */
+  function scopeToActiveConversation(rows) {
+    if (rows.length < 4) return { rows: rows, dropped: 0, clusters: 1 };
+    var clusters = clusterRowsByContainer(rows);
+    if (clusters.length < 2) return { rows: rows, dropped: 0, clusters: clusters.length };
+
+    // Per-role wrappers of one conversation split into single-kind clusters;
+    // dropping one of those would delete half of the transcript.
+    var conversationLike = clusters.every(function (cluster) {
+      if (cluster.rows.length < 2) return false;
+      var kinds = {};
+      cluster.rows.forEach(function (row) { kinds[rowKind(row)] = true; });
+      return Object.keys(kinds).length >= 2;
+    });
+    if (!conversationLike) return { rows: rows, dropped: 0, clusters: clusters.length };
+
+    var best = null;
+    clusters.forEach(function (cluster, index) {
+      var onScreen = 0;
+      cluster.rows.forEach(function (row) { onScreen += isInViewport(row); });
+      var score = { onScreen: onScreen, size: cluster.rows.length, order: index };
+      if (!best || score.onScreen > best.score.onScreen
+        || (score.onScreen === best.score.onScreen && score.size > best.score.size)
+        || (score.onScreen === best.score.onScreen && score.size === best.score.size && score.order > best.score.order)) {
+        best = { cluster: cluster, score: score };
+      }
+    });
+    var kept = dom.sortDocumentOrder(best.cluster.rows);
+    return { rows: kept, dropped: rows.length - kept.length, clusters: clusters.length };
   }
 
   /**
@@ -574,7 +714,11 @@
     var navPenalty = (container.tagName === 'NAV' || tag === 'A' || tag === 'BUTTON' || tag === 'OPTION' || tag === 'LI') ? 0.15 : 1;
     var markdownRatio = markdownMembers / usable.length;
     var shapeFactor = 1 / Math.sqrt(order.length);
-    var score = rows.length * Math.log(1 + totalText) * (0.35 + markdownRatio) * shapeFactor * navPenalty;
+    // Rows that wrap their own message list are conversations, not messages.
+    var listLike = 0;
+    for (var k = 0; k < rows.length; k++) if (nestedRowCount(rows[k], hints) >= 2) listLike++;
+    var listPenalty = listLike ? 1 / (1 + listLike) : 1;
+    var score = rows.length * Math.log(1 + totalText) * (0.35 + markdownRatio) * shapeFactor * navPenalty * listPenalty;
     return { score: score, rows: rows, signature: signatureOut, container: container };
   }
 
@@ -587,6 +731,7 @@
       var container = all[i];
       if (container.getAttribute && container.getAttribute('data-aice-ui') != null) continue;
       if (insideUi(container)) continue;
+      if (insideNonConversationRegion(container)) continue;
       if (container.tagName === 'SCRIPT' || container.tagName === 'STYLE') continue;
       var children = [];
       for (var c = 0; c < container.children.length; c++) {
@@ -625,11 +770,26 @@
   function detectRows(doc, hints) {
     var explicit = rowsFromSelectors(doc, hints);
     if (explicit.length >= 2) {
-      return { rows: explicit, source: 'platform-selectors', signature: hints.rowSelectors[0] || '' };
+      var scopedExplicit = scopeToActiveConversation(explicit);
+      return {
+        rows: scopedExplicit.rows,
+        source: 'platform-selectors',
+        signature: hints.rowSelectors[0] || '',
+        droppedRows: scopedExplicit.dropped,
+        clusters: scopedExplicit.clusters
+      };
     }
     var group = findRepeatedGroups(doc, hints);
     if (group && group.rows.length >= 2) {
-      return { rows: dedupeNested(group.rows), source: group.source, signature: group.signature, container: group.container };
+      var scoped = scopeToActiveConversation(dedupeNested(group.rows));
+      return {
+        rows: scoped.rows,
+        source: group.source,
+        signature: group.signature,
+        container: group.container,
+        droppedRows: scoped.dropped,
+        clusters: scoped.clusters
+      };
     }
     if (explicit.length === 1) return { rows: explicit, source: 'platform-selectors-single', signature: hints.rowSelectors[0] || '' };
     if (group && group.rows.length === 1) return { rows: group.rows, source: 'repeated-siblings-single', signature: group.signature };
@@ -900,6 +1060,7 @@
     }
 
     if (extraction.messages.length === 0) warnings.push('all-rows-empty');
+    if (detection.droppedRows > 0) warnings.push('other-conversation-rows-dropped:' + detection.droppedRows);
     var roleFlags = extraction.roleFlags || [];
     for (var f = 0; f < roleFlags.length; f++) warnings.push(roleFlags[f]);
     if (extraction.knownRoles === 0 && extraction.messages.length > 1) warnings.push('roles-inferred-by-alternation');
@@ -916,6 +1077,8 @@
         rows: extraction.rowCount,
         emptyRows: extraction.emptyRows || 0,
         knownRoles: extraction.knownRoles,
+        droppedRows: detection.droppedRows || 0,
+        clusters: detection.clusters || 1,
         signature: detection.signature || ''
       }
     };

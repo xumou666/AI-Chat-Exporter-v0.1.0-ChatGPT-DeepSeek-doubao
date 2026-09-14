@@ -94,6 +94,18 @@
       var rects = typeof el.getClientRects === 'function' ? el.getClientRects() : null;
       if (rects && rects.length === 0) return false;
     }
+    // A hidden ancestor hides the element just as effectively — SPAs keep the
+    // previous conversation mounted with display:none / aria-hidden / hidden.
+    var ancestor = el.parentElement;
+    var depth = 0;
+    while (ancestor && depth < 14 && ancestor !== doc.body && ancestor !== doc.documentElement) {
+      if (ancestor.hasAttribute('hidden')) return false;
+      if (ancestor.getAttribute('aria-hidden') === 'true') return false;
+      var style = ancestor.getAttribute('style') || '';
+      if (/display\s*:\s*none|visibility\s*:\s*hidden/i.test(style)) return false;
+      ancestor = ancestor.parentElement;
+      depth++;
+    }
     return true;
   }
 

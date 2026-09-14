@@ -43,7 +43,9 @@ export const DEFAULT_URLS = {
   'doubao.html': 'https://www.doubao.com/chat/1234567890',
   'generic-random.html': 'https://somechat.example.com/t/42',
   'shared-markdown-wrapper.html': 'https://somechat.example.com/t/7',
-  'no-role-signals.html': 'https://somechat.example.com/t/8'
+  'no-role-signals.html': 'https://somechat.example.com/t/8',
+  'deepseek-switched.html': 'https://chat.deepseek.com/a/chat/s/9f8e7d6c',
+  'two-visible-conversations.html': 'https://somechat.example.com/t/11'
 };
 
 export function readFixture(name) {

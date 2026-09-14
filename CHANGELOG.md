@@ -2,6 +2,23 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.3] — 2026-09-14
+
+**修复"切换对话后把别的对话内容也算进来"的问题**（以 DeepSeek 网页版为例）。
+
+### 修复
+
+- **分组选错层级**：消息列表被包在"对话容器"里时，解析器可能把**整个对话容器**当成一条消息——两段对话就变成"两条消息"。现在候选行里若包含自己的消息子列表，会按包含的子消息数**降权**，从而选中真正的消息层级。
+- **短消息被整体丢弃**：候选消息组的最小文本阈值过高（60 字），导致"内层正确但文本较少"的候选被丢掉，外层容器反而胜出。阈值降为 24 字，并配合下面的区域过滤，避免误收侧栏。
+- **隐藏的历史对话仍参与解析**：SPA 切换对话时上一段对话常被保留在 DOM 里（`display:none` / `aria-hidden` / `hidden` / `visibility:hidden`）。`isVisible` 现在会检查祖先链，这类整块内容不再参与候选。
+- **侧栏历史被当成消息**：位于 `nav` / `aside` / `[role=navigation]` / 类名含 `sidebar`、`history`、`conversation-list`、`session-list` 的容器内，一律不作为消息行参与解析。
+- **两段对话同时可见**：新增对话作用域收敛——按"容器聚类"把候选行分成若干段，只保留一段（优先屏幕上可见的、其次消息更多的、再次文档顺序靠后的），并在丢弃其它对话内容时给出告警；对"按角色分别包裹"的单段对话会整体保留，不会误删一半。
+- 测试 65 → 69 项，新增 DeepSeek 切换对话、双对话可见、四种隐藏方式共 4 个用例与 2 个夹具。
+
+### 改进
+
+- 「结构诊断」新增 `dropped` / `clusters` 两个字段（丢弃了多少条其它对话、页面上检测到几段对话），便于反馈问题时定位。
+
 ## [0.1.2] — 2026-09-14
 
 **修复用户/助手角色被判断错（导出后角色颠倒）的问题。** 这是本次唯一的用户可见行为变化。
@@ -72,6 +89,7 @@
 - **可复现产物**：`npm run examples` 生成导出样例，`npm run screenshots` 生成文档截图，`npm run package` 生成 Release ZIP。
 - **隐私优先**：不申请 `<all_urls>`，不发送任何数据到服务器。
 
+[0.1.3]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.3
 [0.1.2]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.2
 [0.1.1]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.1
 [0.1.0]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.0

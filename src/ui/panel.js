@@ -363,6 +363,8 @@
       if (match) return t('warning_lowConfidence', { count: match[1] });
       match = value.match(/^roles-alternation-repaired:(\d+)$/);
       if (match) return t('warningRolesRepaired', { count: match[1] });
+      match = value.match(/^other-conversation-rows-dropped:(\d+)$/);
+      if (match) return t('warningOtherConversationRows', { count: match[1] });
       var table = {
         'no-message-rows-detected': 'warning_noMessageRows',
         'all-rows-empty': 'warning_allRowsEmpty',

@@ -4,11 +4,11 @@
 纯本地运行的 Chrome / Edge 扩展（Manifest V3），无后端、无账号、无运行时依赖。
 
 [![CI](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml/badge.svg)](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-65%20passed-brightgreen)
+![tests](https://img.shields.io/badge/tests-69%20passed-brightgreen)
 ![manifest](https://img.shields.io/badge/manifest-v3-blue)
 ![platform](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-blue)
 ![deps](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
-[![version](https://img.shields.io/badge/version-0.1.2-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.3-blue)](CHANGELOG.md)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 <!--
@@ -218,6 +218,19 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 </details>
 
 <details>
+<summary><b>切换对话后，导出里混进了上一段对话或侧栏历史？</b></summary>
+
+从 0.1.3 起解析器会先确定"当前这段对话"再取消息：
+
+- **按消息层级取行**：不会再把"整个对话容器"当成一条消息（那样两段对话会变成两条）；
+- **排除导航区**：`nav` / `aside` / 侧栏 / 历史列表里的内容不会当作消息；
+- **排除隐藏内容**：`display:none`、`aria-hidden`、`hidden`、`visibility:hidden` 的整块（SPA 里被缓存的上一段对话）直接跳过；
+- **多段对话只取一段**：若页面上同时存在多段对话，优先取屏幕上可见的那段，其次是消息更多的一段，并会在诊断里提示丢弃了多少条别的内容。
+
+如果它仍然取错了段落，用「手动校准」点两条当前对话的消息即可；反馈问题时请把「结构诊断」里的 `strategy`、`clusters`、`dropped` 一并贴上。
+</details>
+
+<details>
 <summary><b>长对话只导出后一半？</b></summary>
 
 页面采用虚拟滚动，没渲染的消息不在 DOM 里。请先向上滚动把历史加载完（或分段导出后合并）。
@@ -241,7 +254,7 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 
 ```bash
 npm install          # 只装测试用的 jsdom（扩展运行时不依赖任何包）
-npm test             # 65 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
+npm test             # 69 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
 npm run examples     # 重新生成 examples/
 npm run screenshots  # 用本机 Chrome/Edge 重新生成 docs/images/（可用 AICE_BROWSER 指定路径）
 npm run icons        # 重新生成 assets/icon*.png
@@ -285,7 +298,7 @@ src/platforms/*.js          ChatGPT / DeepSeek / 豆包 / 通用适配器 + 注�
 src/ui/panel.js, panel.css  页面内浮动面板
 src/content.js              内容脚本入口（装配 + 下载 + 校准 + 消息接口）
 src/background.js           Service Worker（工具栏点击 / 按需注入）
-tests/                      jsdom 测试（65 项）与 HTML 夹具
+tests/                      jsdom 测试（69 项）与 HTML 夹具
 tools/                      图标、样例、截图、打包脚本
 examples/                   真实导出样例
 docs/                       使用教程与截图
@@ -294,7 +307,7 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ## 更新日志
 
-版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.2**（2026-09-14）。
+版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.3**（2026-09-14）。
 
 发版时版本号出现在三处，`tests/manifest.test.js` 会校验它们一致，避免"扩展显示一个版本、导出文件里写着另一个"：
 
@@ -308,9 +321,9 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ```bash
 npm test
-git commit -am "chore(release): v0.1.3"
+git commit -am "chore(release): v0.1.4"
 git push
-git tag v0.1.3 && git push origin v0.1.3
+git tag v0.1.4 && git push origin v0.1.4
 ```
 
 推送 tag 后 [`release.yml`](.github/workflows/release.yml) 会自动跑测试、用 `npm run package` 打包扩展，

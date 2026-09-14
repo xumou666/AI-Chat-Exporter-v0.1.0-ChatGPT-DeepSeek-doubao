@@ -45,7 +45,7 @@ body { margin: 0; padding: 32px 40px 64px; color: var(--fg); background: #fff;
 <body>
 <div class="doc">
 <h1 class="doc-title">如何优化慢 SQL</h1>
-<div class="meta"><div>平台: DeepSeek</div><div>消息数: 4</div><div>导出时间: 2026-09-14 17:13</div><div>来源: <a href="https://chat.deepseek.com/a/chat/s/9f8e7d6c">https://chat.deepseek.com/a/chat/s/9f8e7d6c</a></div></div>
+<div class="meta"><div>平台: DeepSeek</div><div>消息数: 4</div><div>导出时间: 2026-09-14 17:29</div><div>来源: <a href="https://chat.deepseek.com/a/chat/s/9f8e7d6c">https://chat.deepseek.com/a/chat/s/9f8e7d6c</a></div></div>
 <div class="toc"><strong>目录</strong><ol><li><a href="#msg-0">用户 · 线上有一条 SQL 很慢，怎么排查和优化？</a></li><li><a href="#msg-1">助手 · 排查慢 SQL 一般分三步： 用 EXPLAIN 看执行计划 确认索引是否命中 检查回表与排序 EXPLAIN ANAL</a></li><li><a href="#msg-2">用户 · email 上没有索引，加索引会更快吗？</a></li><li><a href="#msg-3">助手 · 会。等值查询加普通二级索引即可把全表扫描变成索引查找： CREATE INDEX idx_users_email ON </a></li></ol></div>
 <section class="msg msg-user" id="msg-0">
 <div class="msg-head"><span>👤 用户</span><span class="msg-index">#1</span></div>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>两段对话同时在 DOM 里可见</title>
+</head>
+<body>
+  <!--
+    复现用例：切换对话后，上一段对话既没被移除、也没被隐藏（只是滚到别处了）。
+    解析器必须只取其中一段（当前对话），不能把两段拼在一起。
+  -->
+  <div id="app">
+    <div class="chat-panel">
+      <div class="thread">
+        <div class="turn"><div class="bubble">上一段对话的问题</div></div>
+        <div class="turn"><div class="bubble"><p>上一段对话的回答。</p></div></div>
+      </div>
+    </div>
+    <div class="chat-panel">
+      <div class="thread">
+        <div class="turn"><div class="bubble">当前对话的第一个问题</div></div>
+        <div class="turn"><div class="bubble"><p>当前对话的第一个回答。</p></div></div>
+        <div class="turn"><div class="bubble">当前对话的第二个问题</div></div>
+        <div class="turn"><div class="bubble"><p>当前对话的第二个回答。</p></div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
