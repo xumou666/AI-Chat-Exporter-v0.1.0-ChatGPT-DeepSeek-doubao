@@ -23,6 +23,20 @@ test('manifest declares MV3 with the expected metadata', () => {
   assert.equal(manifest.background.service_worker, 'src/background.js');
 });
 
+test('the version matches in manifest.json, package.json, schema.js and the changelog', () => {
+  const schemaSource = readFileSync(path.join(ROOT, 'src', 'core', 'schema.js'), 'utf8');
+  const match = schemaSource.match(/var EXPORTER_VERSION = '([^']+)'/);
+  assert.ok(match, 'EXPORTER_VERSION constant is declared in schema.js');
+  assert.equal(match[1], pkg.version, 'schema.js EXPORTER_VERSION must match package.json');
+  assert.equal(manifest.version, pkg.version, 'manifest.json version must match package.json');
+
+  const changelog = readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+  assert.ok(
+    changelog.includes(`## [${pkg.version}]`),
+    `CHANGELOG.md must document the current version (## [${pkg.version}])`
+  );
+});
+
 test('every file referenced by the manifest exists', () => {
   const files = [
     manifest.background.service_worker,

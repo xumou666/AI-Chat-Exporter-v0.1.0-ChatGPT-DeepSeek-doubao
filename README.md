@@ -3,18 +3,20 @@
 **一键把网页端 ChatGPT / DeepSeek / 豆包 的对话导出为 Markdown、JSON、PDF、HTML 或纯文本。**
 纯本地运行的 Chrome / Edge 扩展（Manifest V3），无后端、无账号、无运行时依赖。
 
-![tests](https://img.shields.io/badge/tests-58%20passed-brightgreen)
+[![CI](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml/badge.svg)](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml)
+![tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)
 ![manifest](https://img.shields.io/badge/manifest-v3-blue)
 ![platform](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-blue)
 ![deps](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
+[![version](https://img.shields.io/badge/version-0.1.1-blue)](CHANGELOG.md)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 <!--
-发布前检查清单（GitHub 上不显示这段注释）：
-1. 若仓库已启用 GitHub Actions，可把上面第一行换成真实的 CI 徽章：
-   ![CI](https://github.com/<你的用户名>/<仓库名>/actions/workflows/ci.yml/badge.svg)
-2. 截图由 `npm run screenshots` 生成，改动 UI 后请重新生成并提交 docs/images/。
-3. `npm run package` 会产出 dist/ai-chat-exporter-<version>.zip，可直接上传到 Release。
+维护提示（GitHub 上不显示这段注释）：
+- 改动 UI 后跑 `npm run screenshots` 重新生成 docs/images/ 并提交。
+- 改动导出结果后跑 `npm run examples` 重新生成 examples/ 并提交。
+- 发版：改版本号 → `npm test` → 提交推送 → 打 tag `v<version>` 推送；GitHub Actions 会自动跑测试、打包扩展并创建 Release。
+- 三个版本号必须同步：manifest.json / package.json / src/core/schema.js（由 npm test 校验）。
 -->
 
 <p align="center">
@@ -43,6 +45,7 @@
 - [已知限制](#已知限制)
 - [开发与测试](#开发与测试)
 - [目录结构](#目录结构)
+- [更新日志](#更新日志)
 - [隐私](#隐私)
 - [许可与致谢](#许可与致谢)
 
@@ -225,7 +228,7 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 
 ```bash
 npm install          # 只装测试用的 jsdom（扩展运行时不依赖任何包）
-npm test             # 58 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
+npm test             # 59 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
 npm run examples     # 重新生成 examples/
 npm run screenshots  # 用本机 Chrome/Edge 重新生成 docs/images/（可用 AICE_BROWSER 指定路径）
 npm run icons        # 重新生成 assets/icon*.png
@@ -269,12 +272,37 @@ src/platforms/*.js          ChatGPT / DeepSeek / 豆包 / 通用适配器 + 注�
 src/ui/panel.js, panel.css  页面内浮动面板
 src/content.js              内容脚本入口（装配 + 下载 + 校准 + 消息接口）
 src/background.js           Service Worker（工具栏点击 / 按需注入）
-tests/                      jsdom 测试（58 项）与 HTML 夹具
+tests/                      jsdom 测试（59 项）与 HTML 夹具
 tools/                      图标、样例、截图、打包脚本
 examples/                   真实导出样例
 docs/                       使用教程与截图
 demo/                       离线演示页、同步 UI 预览页、浏览器自检页
 ```
+
+## 更新日志
+
+版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.1**（2026-09-13）。
+
+发版时版本号出现在三处，`tests/manifest.test.js` 会校验它们一致，避免"扩展显示一个版本、导出文件里写着另一个"：
+
+| 位置 | 作用 |
+| --- | --- |
+| `manifest.json` 的 `version` | `chrome://extensions` 卡片与扩展详情页显示的版本 |
+| `package.json` 的 `version` | `npm run package` 产出的 `dist/ai-chat-exporter-<version>.zip`，也是 CHANGELOG 的标题版本 |
+| `src/core/schema.js` 的 `EXPORTER_VERSION` | 导出文件里的 `exporter:`（Markdown front matter）与 `meta.exporter.version`（JSON） |
+
+发新版本的最小流程：改这三处 → 在 `CHANGELOG.md` 顶部加一节 → `npm test` → 提交推送 → 打 tag 并推送：
+
+```bash
+npm test
+git commit -am "chore(release): v0.1.2"
+git push
+git tag v0.1.2 && git push origin v0.1.2
+```
+
+推送 tag 后 [`release.yml`](.github/workflows/release.yml) 会自动跑测试、用 `npm run package` 打包扩展，
+并创建带 ZIP 附件的 GitHub Release；若 tag 与 `package.json` 的版本不一致会直接失败，避免发错版本。
+Release 列表：<https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases>。
 
 ## 隐私
 

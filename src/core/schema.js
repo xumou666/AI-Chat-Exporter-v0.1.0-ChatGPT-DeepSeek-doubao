@@ -10,7 +10,7 @@
 
   var SCHEMA_ID = 'ai-chat-exporter/conversation@1';
   var EXPORTER_NAME = 'AI Chat Exporter';
-  var EXPORTER_VERSION = '0.1.0';
+  var EXPORTER_VERSION = '0.1.1';
 
   var ROLES = ['user', 'assistant', 'system', 'tool'];
   var ROLE_LABELS = {

@@ -1,0 +1,56 @@
+name: Release
+
+# 版本号更新后自动上传：
+#   1) 改 manifest.json / package.json / src/core/schema.js 的版本号与 CHANGELOG.md
+#   2) 提交并推送 main
+#   3) git tag v<version> && git push origin v<version>
+# 本工作流会校验 tag 与 package.json 一致，跑测试、打包扩展并创建带 ZIP 附件的 Release。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: package and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check that the tag matches the declared version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "package.json version: v$VERSION"
+          echo "triggering ref:       ${GITHUB_REF_NAME}"
+          if [ "${GITHUB_REF_NAME}" != "v$VERSION" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json v$VERSION — bump the version first"
+            exit 1
+          fi
+
+      - run: npm test
+
+      - run: npm run package
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/*.zip --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/*.zip \
+              --title "AI Chat Exporter ${GITHUB_REF_NAME}" \
+              --generate-notes
+          fi

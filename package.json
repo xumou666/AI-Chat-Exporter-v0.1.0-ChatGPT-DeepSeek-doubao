@@ -1,6 +1,6 @@
 {
   "name": "ai-chat-exporter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Chrome/Edge (MV3) extension that exports ChatGPT / DeepSeek / Doubao web conversations to Markdown, JSON and PDF.",
   "type": "module",

@@ -3,15 +3,15 @@ title: Renamed widget
 platform: "网页对话"
 platform_id: generic
 url: "https://somechat.example.com/t/42"
-exported_at: "2026-09-13T11:42:25.243Z"
+exported_at: "2026-09-14T08:48:00.170Z"
 message_count: 4
-exporter: AI Chat Exporter 0.1.0
+exporter: AI Chat Exporter 0.1.1
 schema: "ai-chat-exporter/conversation@1"
 ---
 
 # Renamed widget
 
-> **平台**: 网页对话 ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-13 19:42
+> **平台**: 网页对话 ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-14 16:48
 >
 > 来源: <https://somechat.example.com/t/42>
 

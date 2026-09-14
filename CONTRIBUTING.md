@@ -54,6 +54,31 @@ npm test
 - [ ] 面向用户的行为变化 → 更新 `README.md` 与 `CHANGELOG.md`
 - [ ] 不引入运行时依赖（如确有必要请在 PR 里说明理由）
 
+## 发布新版本
+
+版本号出现在四个地方，`npm test` 会校验它们一致：
+
+1. `manifest.json` 的 `version`
+2. `package.json` 的 `version`
+3. `src/core/schema.js` 的 `EXPORTER_VERSION`
+4. `CHANGELOG.md` 顶部的 `## [<version>] — <date>` 小节
+
+流程：
+
+```bash
+# 1) 改上面四个地方
+npm test                        # 版本一致性会被校验
+npm run examples                # 若导出结果有变化，更新 examples/
+npm run screenshots             # 若 UI 有变化，更新 docs/images/
+git commit -am "chore(release): v0.1.2"
+git push
+git tag v0.1.2 && git push origin v0.1.2
+```
+
+推送 tag 后 [`.github/workflows/release.yml`](.github/workflows/release.yml) 会自动：
+校验 tag 与 `package.json` 一致 → 跑测试 → `npm run package` 打包扩展 → 创建带 ZIP 附件的 GitHub Release。
+tag 与版本号不一致时工作流会失败，避免发错版本。
+
 ## 报告问题
 
 请使用 issue 模板，并尽量附上：

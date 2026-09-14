@@ -4,15 +4,15 @@ platform: DeepSeek
 platform_id: deepseek
 url: "https://chat.deepseek.com/a/chat/s/9f8e7d6c"
 conversation_id: 9f8e7d6c
-exported_at: "2026-09-13T11:42:25.079Z"
+exported_at: "2026-09-14T08:47:59.990Z"
 message_count: 4
-exporter: AI Chat Exporter 0.1.0
+exporter: AI Chat Exporter 0.1.1
 schema: "ai-chat-exporter/conversation@1"
 ---
 
 # 如何优化慢 SQL
 
-> **平台**: DeepSeek ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-13 19:42
+> **平台**: DeepSeek ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-14 16:47
 >
 > 来源: <https://chat.deepseek.com/a/chat/s/9f8e7d6c>
 

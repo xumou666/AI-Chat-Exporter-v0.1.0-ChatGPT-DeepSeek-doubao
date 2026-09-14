@@ -4,15 +4,15 @@ platform: "豆包"
 platform_id: doubao
 url: "https://www.doubao.com/chat/1234567890"
 conversation_id: 1234567890
-exported_at: "2026-09-13T11:42:25.157Z"
+exported_at: "2026-09-14T08:48:00.072Z"
 message_count: 4
-exporter: AI Chat Exporter 0.1.0
+exporter: AI Chat Exporter 0.1.1
 schema: "ai-chat-exporter/conversation@1"
 ---
 
 # 帮我写一份周报
 
-> **平台**: 豆包 ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-13 19:42
+> **平台**: 豆包 ｜ **消息数**: 4 ｜ **导出时间**: 2026-09-14 16:48
 >
 > 来源: <https://www.doubao.com/chat/1234567890>
 

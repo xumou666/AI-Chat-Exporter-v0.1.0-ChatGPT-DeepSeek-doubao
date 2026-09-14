@@ -4,15 +4,15 @@ platform: ChatGPT
 platform_id: chatgpt
 url: "https://chatgpt.com/c/abc123"
 conversation_id: abc123
-exported_at: "2026-09-13T11:42:24.918Z"
+exported_at: "2026-09-14T08:47:59.830Z"
 message_count: 2
-exporter: AI Chat Exporter 0.1.0
+exporter: AI Chat Exporter 0.1.1
 schema: "ai-chat-exporter/conversation@1"
 ---
 
 # Python 列表去重
 
-> **平台**: ChatGPT ｜ **消息数**: 2 ｜ **导出时间**: 2026-09-13 19:42
+> **平台**: ChatGPT ｜ **消息数**: 2 ｜ **导出时间**: 2026-09-14 16:47
 >
 > 来源: <https://chatgpt.com/c/abc123>
 
