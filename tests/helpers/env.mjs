@@ -45,7 +45,9 @@ export const DEFAULT_URLS = {
   'shared-markdown-wrapper.html': 'https://somechat.example.com/t/7',
   'no-role-signals.html': 'https://somechat.example.com/t/8',
   'deepseek-switched.html': 'https://chat.deepseek.com/a/chat/s/9f8e7d6c',
-  'two-visible-conversations.html': 'https://somechat.example.com/t/11'
+  'two-visible-conversations.html': 'https://somechat.example.com/t/11',
+  'deepseek-virtual-real.html': 'https://chat.deepseek.com/share/qwe6aiv9pg6b6b7mbb',
+  'deepseek-virtual-stale.html': 'https://chat.deepseek.com/share/rtz1umqpj6sdbj3q4h'
 };
 
 export function readFixture(name) {

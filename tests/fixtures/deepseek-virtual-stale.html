@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>切换对话后的 DeepSeek 虚拟列表</title>
+</head>
+<body>
+  <!--
+    复现用例：切换对话后，同一个虚拟列表里还留着上一段对话的渲染项
+    （key 1101、1102，属于另一个对话），随后才是当前对话的项（key 1、2、3、4）。
+    key 从 1102 跳到 1 —— 这种不连续正是"两段对话混在一起"的判定依据。
+  -->
+  <div class="cb86951c">
+    <div class="c3ecdb44">
+      <div class="_7780f2e">
+        <div class="ds-virtual-list ds-virtual-list--printable ds-scroll-area _2bd7b35" tabindex="0" style="display: flex; flex-direction: column;">
+          <div class="ds-virtual-list-items _6f2c522" style="box-sizing: content-box;">
+            <div class="ds-virtual-list-visible-items" style="position: relative; transform: translateY(0px);">
+              <div class="a9bc8553 _8fcc355" data-virtual-list-item-key="-999">该对话来自分享，由 AI 生成，请仔细甄别。</div>
+
+              <div class="_9663006" data-virtual-list-item-key="1101">
+                <div class="d29f3d7d ds-message _63c77b1">
+                  <div class="fbb737a4">上一段对话：帮我写个匹配邮箱的正则</div>
+                </div>
+              </div>
+              <div class="_4f9bf79 d7dc56a8 _43c05b5 _448e4c0" data-virtual-list-item-key="1102">
+                <div class="ds-message _63c77b1">
+                  <div class="ds-markdown ds-assistant-message-main-content">
+                    <p>可以用 <code>^[^@\s]+@[^@\s]+\.[^@\s]+$</code> 校验邮箱。</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="_9663006" data-virtual-list-item-key="1">
+                <div class="d29f3d7d ds-message _63c77b1">
+                  <div class="fbb737a4">当前对话：线上有一条 SQL 很慢，怎么排查？</div>
+                </div>
+              </div>
+              <div class="_4f9bf79 d7dc56a8 _43c05b5 _448e4c0" data-virtual-list-item-key="2">
+                <div class="ds-message _63c77b1">
+                  <div class="ds-markdown ds-assistant-message-main-content">
+                    <p>先用 <code>EXPLAIN</code> 看执行计划，再确认索引命中情况。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="_9663006" data-virtual-list-item-key="3">
+                <div class="d29f3d7d ds-message _63c77b1">
+                  <div class="fbb737a4">当前对话：email 加索引会更快吗？</div>
+                </div>
+              </div>
+              <div class="_4f9bf79 ddc56a8 _43c05b5 _448e4c0" data-virtual-list-item-key="4">
+                <div class="ds-message _63c77b1">
+                  <div class="ds-markdown ds-assistant-message-main-content">
+                    <p>会，加普通二级索引即可。</p>
+                    <pre><code class="language-sql">CREATE INDEX idx_users_email ON users (email);</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

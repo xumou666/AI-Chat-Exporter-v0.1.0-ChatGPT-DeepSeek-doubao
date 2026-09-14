@@ -60,6 +60,16 @@
    */
   var NON_CONVERSATION_REGION = 'nav, aside, [role="navigation"], [class*="sidebar" i], [class*="history" i], [class*="conversation-list" i], [class*="session-list" i]';
 
+  /**
+   * Attributes carrying a virtual-list item key. DeepSeek renders messages in a
+   * virtual list where every item has `data-virtual-list-item-key` equal to its
+   * ordinal inside the conversation (1, 2, 3 …); the guest banner uses -999.
+   * A key sequence that is not contiguous means several conversations share the
+   * list — the evidence used to scope an export.
+   */
+  var ITEM_KEY_ATTRIBUTE = 'data-virtual-list-item-key';
+  var ITEM_KEY_FALLBACKS = ['data-item-index', 'data-message-index', 'data-vl-index', 'data-key'];
+
   /** True for the exporter's own panel/FAB — it must never be exported. */
   function insideUi(el) {
     if (!el || !el.closest) return false;
@@ -529,8 +539,86 @@
     if (insideUi(row)) return false;
     if (insideNonConversationRegion(row)) return false;
     if (row.matches && row.matches(ROW_BLOCKLIST)) return false;
+    var key = itemKeyOf(row);
+    if (key && key.key < 0) return false; // sentinel items (banners, spacers)
+    if (key && !dom.containsAny(row, (hints.contentSelectors || []).concat('[class*="message" i]'))) return false;
     if (rowTextLength(row, hints) < hints.minRowTextLength) return false;
     return true;
+  }
+
+  /** Virtual-list item ordinal for a row (or its closest keyed ancestor). */
+  function itemKeyOf(row) {
+    var node = row;
+    var depth = 0;
+    while (node && depth < 4) {
+      if (node.getAttribute) {
+        var direct = node.getAttribute(ITEM_KEY_ATTRIBUTE);
+        if (direct != null && /^-?\d+$/.test(direct)) {
+          return { key: Number(direct), attribute: ITEM_KEY_ATTRIBUTE };
+        }
+        // Fallbacks only inside something that looks like a virtual list.
+        if (/virtual/i.test(dom.classString(node))) {
+          for (var i = 0; i < ITEM_KEY_FALLBACKS.length; i++) {
+            var value = node.getAttribute(ITEM_KEY_FALLBACKS[i]);
+            if (value != null && /^-?\d+$/.test(value)) {
+              return { key: Number(value), attribute: ITEM_KEY_FALLBACKS[i] };
+            }
+          }
+        }
+      }
+      node = node.parentElement;
+      depth++;
+    }
+    return null;
+  }
+
+  /** On screen first, then more rows, then later in the document. */
+  function betterScopeScore(candidate, incumbent) {
+    if (candidate.onScreen !== incumbent.onScreen) return candidate.onScreen > incumbent.onScreen;
+    if (candidate.size !== incumbent.size) return candidate.size > incumbent.size;
+    return candidate.order > incumbent.order;
+  }
+
+  /**
+   * Splits rows at item-key discontinuities. Within one conversation the
+   * rendered window is contiguous; a jump means another conversation's items
+   * are still mounted (SPA conversation switching).
+   */
+  function segmentByItemKey(rows) {
+    var keyed = [];
+    for (var i = 0; i < rows.length; i++) {
+      var info = itemKeyOf(rows[i]);
+      if (info && Number.isFinite(info.key)) keyed.push({ row: rows[i], info: info });
+    }
+    if (keyed.length < 3) return null;
+
+    var segments = [];
+    var current = [keyed[0]];
+    for (var k = 1; k < keyed.length; k++) {
+      if (keyed[k].info.key === keyed[k - 1].info.key + 1) {
+        current.push(keyed[k]);
+      } else {
+        segments.push(current);
+        current = [keyed[k]];
+      }
+    }
+    segments.push(current);
+    if (segments.length < 2) return null;
+
+    var best = null;
+    segments.forEach(function (segment, index) {
+      var onScreen = 0;
+      segment.forEach(function (entry) { onScreen += isInViewport(entry.row); });
+      var score = { onScreen: onScreen, size: segment.length, order: index };
+      if (!best || betterScopeScore(score, best.score)) best = { segment: segment, score: score };
+    });
+    var kept = best.segment.map(function (entry) { return entry.row; });
+    return {
+      rows: dom.sortDocumentOrder(kept),
+      dropped: rows.length - kept.length,
+      clusters: segments.length,
+      by: 'item-key'
+    };
   }
 
   /** True when an ancestor (never the row itself) belongs to navigation chrome. */
@@ -637,6 +725,12 @@
    * prefer what is on screen, then the richer set, then the later one.
    */
   function scopeToActiveConversation(rows) {
+    if (rows.length < 2) return { rows: rows, dropped: 0, clusters: 1 };
+
+    // Virtual lists carry a per-conversation ordinal — the strongest evidence.
+    var byKey = segmentByItemKey(rows);
+    if (byKey) return byKey;
+
     if (rows.length < 4) return { rows: rows, dropped: 0, clusters: 1 };
     var clusters = clusterRowsByContainer(rows);
     if (clusters.length < 2) return { rows: rows, dropped: 0, clusters: clusters.length };
@@ -656,14 +750,10 @@
       var onScreen = 0;
       cluster.rows.forEach(function (row) { onScreen += isInViewport(row); });
       var score = { onScreen: onScreen, size: cluster.rows.length, order: index };
-      if (!best || score.onScreen > best.score.onScreen
-        || (score.onScreen === best.score.onScreen && score.size > best.score.size)
-        || (score.onScreen === best.score.onScreen && score.size === best.score.size && score.order > best.score.order)) {
-        best = { cluster: cluster, score: score };
-      }
+      if (!best || betterScopeScore(score, best.score)) best = { cluster: cluster, score: score };
     });
     var kept = dom.sortDocumentOrder(best.cluster.rows);
-    return { rows: kept, dropped: rows.length - kept.length, clusters: clusters.length };
+    return { rows: kept, dropped: rows.length - kept.length, clusters: clusters.length, by: 'container' };
   }
 
   /**
@@ -773,22 +863,27 @@
       var scopedExplicit = scopeToActiveConversation(explicit);
       return {
         rows: scopedExplicit.rows,
+        allRows: explicit,
         source: 'platform-selectors',
         signature: hints.rowSelectors[0] || '',
         droppedRows: scopedExplicit.dropped,
-        clusters: scopedExplicit.clusters
+        clusters: scopedExplicit.clusters,
+        scopedBy: scopedExplicit.by || 'none'
       };
     }
     var group = findRepeatedGroups(doc, hints);
     if (group && group.rows.length >= 2) {
-      var scoped = scopeToActiveConversation(dedupeNested(group.rows));
+      var preScope = dedupeNested(group.rows);
+      var scoped = scopeToActiveConversation(preScope);
       return {
         rows: scoped.rows,
+        allRows: preScope,
         source: group.source,
         signature: group.signature,
         container: group.container,
         droppedRows: scoped.dropped,
-        clusters: scoped.clusters
+        clusters: scoped.clusters,
+        scopedBy: scoped.by || 'none'
       };
     }
     if (explicit.length === 1) return { rows: explicit, source: 'platform-selectors-single', signature: hints.rowSelectors[0] || '' };
@@ -1088,25 +1183,58 @@
   function debugCandidates(doc, platform) {
     var hints = mergeHints(platform);
     var detection = detectRows(doc, hints);
-    var context = buildRoleContext(detection.rows, hints);
-    var preview = detection.rows.slice(0, 12).map(function (row, index) {
+    var kept = detection.rows;
+    var all = detection.allRows && detection.allRows.length ? detection.allRows : kept;
+    var context = buildRoleContext(kept.length ? kept : all, hints);
+    var rows = [];
+    for (var i = 0; i < all.length && rows.length < 30; i++) {
+      var row = all[i];
       var info = classifyRow(row, hints, context);
-      return {
-        index: index,
+      var keyInfo = itemKeyOf(row);
+      rows.push({
+        index: i,
+        kept: kept.indexOf(row) !== -1,
+        key: keyInfo ? keyInfo.key : null,
         signature: dom.signatureOf(row),
         role: info.role,
         confidence: info.confidence,
         reason: info.reason,
         text: dom.textOf(row, hints.ignoreSelectors).slice(0, 120)
-      };
-    });
+      });
+    }
     return {
       strategy: detection.source,
       signature: detection.signature || '',
-      rowCount: detection.rows.length,
+      rowCount: kept.length,
+      totalCandidates: all.length,
+      droppedRows: detection.droppedRows || 0,
+      clusters: detection.clusters || 1,
+      scopedBy: detection.scopedBy || 'none',
       hints: hints.id,
-      rows: preview
+      rows: rows
     };
+  }
+
+  /**
+   * Ordinal of the message row that contains `element` in the current
+   * detection — used by the "点选范围" flow so a user can pin the range by
+   * clicking the first and last message instead of trusting the heuristics.
+   */
+  function rowOrdinalForElement(doc, platform, element) {
+    if (!element) return null;
+    var hints = mergeHints(platform);
+    var detection = detectRows(doc, hints);
+    var rows = detection.rows;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] === element || (rows[i].contains && rows[i].contains(element))) {
+        return {
+          ordinal: i + 1,
+          total: rows.length,
+          text: dom.textOf(rows[i], hints.ignoreSelectors).slice(0, 80)
+        };
+      }
+    }
+    return null;
   }
 
   core.engine = {
@@ -1120,6 +1248,7 @@
     deriveRules: deriveRules,
     extractWithRules: extractWithRules,
     debugCandidates: debugCandidates,
+    rowOrdinalForElement: rowOrdinalForElement,
     BASE_IGNORE: BASE_IGNORE,
     DEFAULT_HINTS: DEFAULT_HINTS
   };

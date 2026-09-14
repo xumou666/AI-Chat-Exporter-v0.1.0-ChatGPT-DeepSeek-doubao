@@ -51,6 +51,8 @@
     var onExport = options.onExport || function () {};
     var onCopy = options.onCopy || function () {};
     var onCalibrate = options.onCalibrate || function () {};
+    var onPickRange = options.onPickRange || function () {};
+    var onCopyDiagnostics = options.onCopyDiagnostics || function () {};
     var onResetRules = options.onResetRules || function () {};
     var onSettingsChange = options.onSettingsChange || function () {};
     var messagesIndex = [];
@@ -67,7 +69,8 @@
     panel.hidden = true;
 
     var head = el(doc, 'div', 'aice-head');
-    var title = el(doc, 'div', 'aice-title', t('panelTitle') + ' · ' + (platform.label || platform.id));
+    var version = options.version || (core.schema && core.schema.EXPORTER_VERSION) || '';
+    var title = el(doc, 'div', 'aice-title', t('panelTitle') + ' · ' + (platform.label || platform.id) + (version ? ' · v' + version : ''));
     var close = button(doc, 'aice-close', '×');
     close.title = t('close');
     head.appendChild(title);
@@ -187,9 +190,13 @@
     var exportBtn = button(doc, 'aice-primary', t('exportMd'));
     var copyBtn = button(doc, null, t('copyMd'));
     var calibrateBtn = button(doc, null, t('calibrate'));
+    var pickRangeBtn = button(doc, null, t('pickRange'));
+    var copyDiagBtn = button(doc, null, t('copyDiagnostics'));
     actions.appendChild(exportBtn);
     actions.appendChild(copyBtn);
     actions.appendChild(calibrateBtn);
+    actions.appendChild(pickRangeBtn);
+    actions.appendChild(copyDiagBtn);
 
     // — diagnostics —
     var diag = el(doc, 'details', 'aice-diag');
@@ -345,11 +352,15 @@
     });
 
     calibrateBtn.addEventListener('click', function () { onCalibrate(); });
+    pickRangeBtn.addEventListener('click', function () { onPickRange(); });
+    copyDiagBtn.addEventListener('click', function () { onCopyDiagnostics(); });
 
     function setBusy(busy) {
       exportBtn.disabled = busy;
       copyBtn.disabled = busy || settings.format === 'pdf';
       calibrateBtn.disabled = busy;
+      pickRangeBtn.disabled = busy;
+      copyDiagBtn.disabled = busy;
     }
 
     function setStatus(text, kind) {
@@ -380,9 +391,13 @@
       if (!info) { diagPre.textContent = '—'; return; }
       var lines = [];
       lines.push(t('diagnosticsHint', { strategy: info.strategy, rows: info.rowCount }));
+      if (typeof info.totalCandidates === 'number') {
+        lines.push('  candidates: ' + info.totalCandidates + ' · clusters: ' + (info.clusters || 1) + ' · dropped: ' + (info.droppedRows || 0));
+      }
       if (info.rows && info.rows.length) {
         info.rows.forEach(function (row) {
-          lines.push('  ' + (row.index + 1) + '. [' + (row.role || '?') + '/' + (row.confidence || '?') + '] ' + (row.signature || '') + ' :: ' + row.text);
+          var mark = row.kept === false ? '✗ ' : '';
+          lines.push('  ' + mark + (row.index + 1) + '. [' + (row.role || '?') + '/' + (row.confidence || '?') + '] ' + (row.signature || '') + ' :: ' + row.text);
         });
       }
       if (info.warnings && info.warnings.length) {

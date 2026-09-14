@@ -2,6 +2,37 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.4] — 2026-09-14
+
+**以真实 DeepSeek 页面（chat.deepseek.com）的 DOM 为依据，修复"切换对话后混入其它对话"。**
+上一版只按"容器聚类"猜测，而混在一起的渲染项常常位于**同一个容器**里，因此没有生效；这一版改用页面自身的 **虚拟列表 item key** 判定。
+
+### 修复
+
+- **按 item key 切分会话（关键修复）**：DeepSeek 的消息渲染在虚拟列表
+  （`.ds-virtual-list` → `.ds-virtual-list-items` → `.ds-virtual-list-visible-items`）中，每个渲染项带
+  `data-virtual-list-item-key`，即该对话内的消息序号（1、2、3…，游客横幅为 `-999`）。**序号不连续就意味着同一列表里混着别的对话**；
+  现在按 key 的连续性切分，只保留当前那一段（优先屏幕上可见的 → 消息更多的 → 文档顺序靠后的），并把丢弃数量写进告警与诊断（`scopedBy: item-key`）。
+- **按真实结构判定角色**：适配器改用实证到的结构——消息行 `div.ds-message`、助手正文语义类
+  `ds-assistant-message-main-content`、用户项外层 `_9663006`、助手项外层 `_4f9bf79`（此前只有猜测的哈希与 `ds-markdown` 线索）。
+- **哨兵项不再当作消息**：key 为负的项（分享横幅、占位行）直接排除。
+- **隐藏内容更严格**：`isVisible` 追加"零尺寸盒子"（`height:0` + `overflow:hidden` 的缓存面板）与祖先 `opacity:0` 判定。
+
+### 新增
+
+- **「复制诊断」按钮**：一键复制版本、页面地址、识别策略、`scopedBy`、候选/丢弃数量、以及每一行的 key、角色依据与文本开头，直接粘进 issue 即可定位。
+- **「点选范围」按钮**：点当前对话的**第一条**再点**最后一条**，直接把范围填进面板（填的是最终会导出的序号），彻底绕开启发式误判。
+- 面板标题显示当前版本号（便于确认浏览器里加载的是哪个构建）。
+
+### 已知限制
+
+- DeepSeek 使用虚拟列表，**只能导出当前已渲染的消息**；长对话请先向上滚动把历史加载出来再导出。
+
+### 工程
+
+- 测试 69 → 76。新增的真实结构夹具取自分享页 DOM（结构与属性原样、文案替换为合成内容），
+  并新增"切换对话后虚拟列表混入旧项"的复现夹具。
+
 ## [0.1.3] — 2026-09-14
 
 **修复"切换对话后把别的对话内容也算进来"的问题**（以 DeepSeek 网页版为例）。
@@ -89,6 +120,7 @@
 - **可复现产物**：`npm run examples` 生成导出样例，`npm run screenshots` 生成文档截图，`npm run package` 生成 Release ZIP。
 - **隐私优先**：不申请 `<all_urls>`，不发送任何数据到服务器。
 
+[0.1.4]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.4
 [0.1.3]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.3
 [0.1.2]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.2
 [0.1.1]: https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/releases/tag/v0.1.1

@@ -93,6 +93,11 @@
     if (hasLayout(doc)) {
       var rects = typeof el.getClientRects === 'function' ? el.getClientRects() : null;
       if (rects && rects.length === 0) return false;
+      // Clipped-away caches (height:0 / overflow:hidden) still return a rect.
+      if (typeof el.getBoundingClientRect === 'function') {
+        var box = el.getBoundingClientRect();
+        if (box && box.width === 0 && box.height === 0) return false;
+      }
     }
     // A hidden ancestor hides the element just as effectively — SPAs keep the
     // previous conversation mounted with display:none / aria-hidden / hidden.
@@ -103,6 +108,8 @@
       if (ancestor.getAttribute('aria-hidden') === 'true') return false;
       var style = ancestor.getAttribute('style') || '';
       if (/display\s*:\s*none|visibility\s*:\s*hidden/i.test(style)) return false;
+      if (/opacity\s*:\s*0(?![\d.])/i.test(style)) return false;
+      if (/overflow\s*:\s*hidden/i.test(style) && /(?:max-)?height\s*:\s*0(?:px)?\s*(?:;|$)/i.test(style)) return false;
       ancestor = ancestor.parentElement;
       depth++;
     }

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>如何优化慢 SQL - DeepSeek</title>
+</head>
+<body>
+  <!--
+    真实结构夹具：取自 chat.deepseek.com 分享页的实际 DOM（class / 属性 / 层级完全一致，
+    文案替换为合成内容）。要点：
+      · 消息渲染在虚拟列表 ds-virtual-list → ds-virtual-list-items → ds-virtual-list-visible-items 里；
+      · 每个渲染项带 data-virtual-list-item-key，就是该对话内的消息序号（1、2、3…）；
+      · 游客横幅项的 key 是 -999，不含 ds-message；
+      · 用户消息外层是哈希类 _9663006，助手消息外层是 _4f9bf79，助手正文带语义类 ds-assistant-message-main-content。
+  -->
+  <div class="cb86951c">
+    <div class="c3ecdb44">
+      <div class="_7780f2e">
+        <div class="ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--enabled _2bd7b35" tabindex="0" style="display: flex; flex-direction: column;">
+          <div class="ds-scroll-area__gutters" style="--container-height: 382px; position: sticky; top: 0px;"></div>
+          <div class="ds-virtual-list-items _6f2c522" style="box-sizing: content-box; padding-top: 0px;">
+            <div class="ds-virtual-list-visible-items" style="position: relative; transform: translateY(0px);">
+              <div class="a9bc8553 _8fcc355" data-virtual-list-item-key="-999">该对话来自分享，由 AI 生成，请仔细甄别。</div>
+
+              <div class="_9663006" data-virtual-list-item-key="1">
+                <div class="d29f3d7d ds-message _63c77b1" style="--panel-width: 0px;">
+                  <div class="fbb737a4">线上有一条 SQL 很慢，怎么排查和优化？</div>
+                </div>
+              </div>
+
+              <div class="_4f9bf79 d7dc56a8 _43c05b5 _448e4c0" data-virtual-list-item-key="2">
+                <div class="ds-message _63c77b1" style="--panel-width: 0px;">
+                  <div class="ds-markdown ds-assistant-message-main-content">
+                    <p>排查慢 SQL 一般分三步：</p>
+                    <ol>
+                      <li>用 <code>EXPLAIN</code> 看执行计划</li>
+                      <li>确认索引是否命中</li>
+                    </ol>
+                    <pre><code class="language-sql">EXPLAIN ANALYZE
+SELECT id, name FROM users WHERE email = 'a@b.com';</code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="_9663006" data-virtual-list-item-key="3">
+                <div class="d29f3d7d ds-message _63c77b1" style="--panel-width: 0px;">
+                  <div class="fbb737a4">email 上没有索引，加索引会更快吗？</div>
+                </div>
+              </div>
+
+              <div class="_4f9bf79 d7dc56a8 _43c05b5 _448e4c0" data-virtual-list-item-key="4">
+                <div class="ds-message _63c77b1" style="--panel-width: 0px;">
+                  <div class="ds-markdown ds-assistant-message-main-content">
+                    <p>会。等值查询加普通二级索引即可把全表扫描变成索引查找。</p>
+                    <pre><code class="language-sql">CREATE INDEX idx_users_email ON users (email);</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="padding-bottom: 96px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

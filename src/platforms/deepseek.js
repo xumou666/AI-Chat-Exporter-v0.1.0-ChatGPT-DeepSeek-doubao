@@ -38,12 +38,18 @@
     id: 'deepseek',
     label: 'DeepSeek',
     hosts: [/^chat\.deepseek\.com$/i, /(^|\.)deepseek\.com$/i],
+    // 真实结构（2026-09 分享页实证）：消息渲染在
+    // .ds-virtual-list → .ds-virtual-list-items → .ds-virtual-list-visible-items 中，
+    // 每个渲染项带 data-virtual-list-item-key（该对话内的消息序号，游客横幅为 -999）；
+    // 用户项外层哈希类 _9663006，助手项外层 _4f9bf79，助手正文带语义类 ds-assistant-message-main-content。
     rowSelectors: [
+      '[data-virtual-list-item-key] [class*="ds-message" i]',
+      '[class*="ds-message" i]',
       '[data-message-id]',
-      '[data-message-role]',
-      '[class*="ds-message" i]'
+      '[data-message-role]'
     ],
     contentSelectors: [
+      '.ds-assistant-message-main-content',
       '.ds-markdown',
       '[class*="ds-markdown" i]',
       '[class*="markdown" i]',
@@ -61,8 +67,8 @@
       '[class*="tool" i]',
       '[data-testid*="tool" i]'
     ],
-    userPatterns: [/fbb737a4/, /user/i, /(^|\s)_9663006(\s|$)/],
-    assistantPatterns: [/ds-markdown/, /assistant/i, /(^|\s)_4f9bf79(\s|$)/],
+    userPatterns: [/(^|\s)_9663006(\s|$)/, /fbb737a4/, /user/i],
+    assistantPatterns: [/ds-assistant-message-main-content/, /(^|\s)_4f9bf79(\s|$)/, /ds-markdown/, /assistant/i],
     userTestIdPatterns: [/user/i, /send/i],
     assistantTestIdPatterns: [/assistant/i, /receive/i, /answer/i],
     userAvatarAlt: ['you', 'user', '我'],
@@ -70,7 +76,9 @@
     ignoreSelectors: [
       '[class*="input" i]',
       '[class*="composer" i]',
-      '[class*="sidebar" i]'
+      '[class*="sidebar" i]',
+      '.ds-scroll-area__gutters',
+      '[class*="virtual-list-visible-items"] > [class*="_8fcc355"]'
     ],
     getMeta: getMeta
   });

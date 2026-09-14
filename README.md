@@ -4,11 +4,11 @@
 纯本地运行的 Chrome / Edge 扩展（Manifest V3），无后端、无账号、无运行时依赖。
 
 [![CI](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml/badge.svg)](https://github.com/xumou666/AI-Chat-Exporter-v0.1.0-ChatGPT-DeepSeek-doubao/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-69%20passed-brightgreen)
+![tests](https://img.shields.io/badge/tests-76%20passed-brightgreen)
 ![manifest](https://img.shields.io/badge/manifest-v3-blue)
 ![platform](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-blue)
 ![deps](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
-[![version](https://img.shields.io/badge/version-0.1.3-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.4-blue)](CHANGELOG.md)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 <!--
@@ -224,10 +224,21 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 
 - **按消息层级取行**：不会再把"整个对话容器"当成一条消息（那样两段对话会变成两条）；
 - **排除导航区**：`nav` / `aside` / 侧栏 / 历史列表里的内容不会当作消息；
-- **排除隐藏内容**：`display:none`、`aria-hidden`、`hidden`、`visibility:hidden` 的整块（SPA 里被缓存的上一段对话）直接跳过；
-- **多段对话只取一段**：若页面上同时存在多段对话，优先取屏幕上可见的那段，其次是消息更多的一段，并会在诊断里提示丢弃了多少条别的内容。
+- **排除隐藏内容**：`display:none`、`aria-hidden`、`hidden`、`visibility:hidden`、零尺寸（`height:0`）的缓存面板直接跳过；
+- **按虚拟列表序号切分（DeepSeek 等）**：这类站点把消息渲染在虚拟列表里，每个渲染项带一个"对话内消息序号"（DeepSeek 是 `data-virtual-list-item-key`，值 1、2、3…，横幅是 `-999`）。序号**不连续**就说明同一列表里混着别的对话——解析器会按连续性切分，只保留当前那段（优先屏幕上可见的 → 消息更多的），并在诊断里标记 `scopedBy: item-key`；
+- **容器聚类兜底**：没有序号可用时，按容器把候选行分成若干段，只取一段，并提示丢弃了多少条。
 
-如果它仍然取错了段落，用「手动校准」点两条当前对话的消息即可；反馈问题时请把「结构诊断」里的 `strategy`、`clusters`、`dropped` 一并贴上。
+如果它仍然取错了段落，有两个立刻可用的手段：
+
+1. **「点选范围」**：点当前对话的**第一条**，再点**最后一条**，范围会自动填进面板（填的是最终会导出的序号）——完全不依赖启发式；
+2. **「复制诊断」**：把版本、页面、策略、`scopedBy`、候选/丢弃数量、每行的 key 与角色依据一次复制出来，粘进 issue 我就能精确定位。
+</details>
+
+<details>
+<summary><b>DeepSeek 的长对话只导出后一半？</b></summary>
+
+DeepSeek 用**虚拟列表**渲染消息：DOM 里只有当前可见的那一段（每个渲染项的 `data-virtual-list-item-key` 就是它在对话里的序号，所以你能从诊断里看出"现在渲染到第几条"）。
+导出前请**向上滚动**把需要的部分加载出来；或者分段导出后用 Markdown 合并。这是站点渲染方式的限制，扩展不会代替你去滚动页面。
 </details>
 
 <details>
@@ -254,7 +265,7 @@ Markdown/HTML 里保留 LaTeX 源码（GitHub、Obsidian、Typora 会渲染）�
 
 ```bash
 npm install          # 只装测试用的 jsdom（扩展运行时不依赖任何包）
-npm test             # 69 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
+npm test             # 76 项测试：提取 / 序列化 / ZIP / 打印文档 / 校准 / 面板 / manifest 一致性
 npm run examples     # 重新生成 examples/
 npm run screenshots  # 用本机 Chrome/Edge 重新生成 docs/images/（可用 AICE_BROWSER 指定路径）
 npm run icons        # 重新生成 assets/icon*.png
@@ -298,7 +309,7 @@ src/platforms/*.js          ChatGPT / DeepSeek / 豆包 / 通用适配器 + 注�
 src/ui/panel.js, panel.css  页面内浮动面板
 src/content.js              内容脚本入口（装配 + 下载 + 校准 + 消息接口）
 src/background.js           Service Worker（工具栏点击 / 按需注入）
-tests/                      jsdom 测试（69 项）与 HTML 夹具
+tests/                      jsdom 测试（76 项）与 HTML 夹具
 tools/                      图标、样例、截图、打包脚本
 examples/                   真实导出样例
 docs/                       使用教程与截图
@@ -307,7 +318,7 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ## 更新日志
 
-版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.3**（2026-09-14）。
+版本历史见 **[CHANGELOG.md](CHANGELOG.md)**；当前版本 **0.1.4**（2026-09-14）。
 
 发版时版本号出现在三处，`tests/manifest.test.js` 会校验它们一致，避免"扩展显示一个版本、导出文件里写着另一个"：
 
@@ -321,9 +332,9 @@ demo/                       离线演示页、同步 UI 预览页、浏览器自
 
 ```bash
 npm test
-git commit -am "chore(release): v0.1.4"
+git commit -am "chore(release): v0.1.5"
 git push
-git tag v0.1.4 && git push origin v0.1.4
+git tag v0.1.5 && git push origin v0.1.5
 ```
 
 推送 tag 后 [`release.yml`](.github/workflows/release.yml) 会自动跑测试、用 `npm run package` 打包扩展，

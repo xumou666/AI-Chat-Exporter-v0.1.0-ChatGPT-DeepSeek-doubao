@@ -21,6 +21,7 @@
   var rules = null;
   var panel = null;
   var calibrating = null;
+  var picking = null;
   var overlay = null;
 
   // — storage (chrome.storage.local with a localStorage fallback) —
@@ -158,6 +159,100 @@
     });
   }
 
+  // — diagnostics report (one click, for pasting into an issue) —
+  function extensionVersion() {
+    try {
+      if (global.chrome && global.chrome.runtime && global.chrome.runtime.getManifest) {
+        return global.chrome.runtime.getManifest().version;
+      }
+    } catch (err) { /* fall through */ }
+    return core.schema.EXPORTER_VERSION;
+  }
+
+  function diagnosticsReport() {
+    var info = core.engine.debugCandidates(global.document, platform);
+    var extraction = core.app.extract(global.document, { platform: platform, customRules: rules, scope: { mode: 'full' } });
+    var lines = [];
+    lines.push(core.schema.EXPORTER_NAME + ' v' + extensionVersion() + '  (engine ' + core.engine.version + ')');
+    lines.push('page: ' + (global.location.href || ''));
+    lines.push('platform: ' + platform.id + '  rules: ' + (rules ? 'calibrated' : 'none'));
+    lines.push('strategy: ' + info.strategy + '  scopedBy: ' + (info.scopedBy || 'none')
+      + '  rows: ' + info.rowCount + '  candidates: ' + info.totalCandidates
+      + '  clusters: ' + (info.clusters || 1) + '  dropped: ' + (info.droppedRows || 0));
+    if (extraction.warnings && extraction.warnings.length) {
+      lines.push('warnings:');
+      Array.prototype.forEach.call(extraction.warnings, function (warning) { lines.push('  - ' + warning); });
+    }
+    lines.push('rows:');
+    (info.rows || []).forEach(function (row) {
+      lines.push('  ' + (row.kept === false ? '[dropped]' : '[kept]   ')
+        + ' key=' + (row.key == null ? '-' : row.key)
+        + ' ' + (row.role || '?') + '/' + (row.confidence || '?')
+        + ' ' + (row.signature || '')
+        + ' :: ' + String(row.text || '').replace(/\s+/g, ' ').slice(0, 70));
+    });
+    return lines.join('\n');
+  }
+
+  function copyDiagnostics() {
+    var report = diagnosticsReport();
+    return core.download.copyToClipboard(report, global.document).then(function () {
+      panel.setStatus(t('diagnosticsCopied'), 'ok');
+      return { copied: true };
+    }, function (error) {
+      panel.setStatus(t('failed', { error: error && error.message ? error.message : String(error) }), 'error');
+      return { copied: false };
+    });
+  }
+
+  // — pick the current conversation's range by clicking its first/last message —
+  function onPickRangeClick(event) {
+    if (!picking) return;
+    var target = event.target;
+    if (target && target.closest && target.closest('#aice-root')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var found = core.engine.rowOrdinalForElement(global.document, platform, target);
+    if (!found) {
+      if (overlay) overlay.textContent = picking.first ? t('pickRangeEnd') : t('pickRangeStart');
+      return;
+    }
+    if (!picking.first) {
+      picking.first = found;
+      if (overlay) overlay.textContent = t('pickRangeEnd');
+      return;
+    }
+    var from = Math.min(picking.first.ordinal, found.ordinal);
+    var to = Math.max(picking.first.ordinal, found.ordinal);
+    stopPicking();
+    var current = panel.getSettings();
+    current.scope = { mode: 'range', from: from, to: to };
+    panel.applySettings(current);
+    panel.toggle(true);
+    panel.setStatus(t('pickRangeDone', { from: from, to: to }), 'ok');
+  }
+
+  function stopPicking() {
+    if (!picking) return;
+    global.document.removeEventListener('click', onPickRangeClick, true);
+    global.document.removeEventListener('keydown', onCalibrateKey, true);
+    picking = null;
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+      overlay = null;
+    }
+  }
+
+  function startPickRange() {
+    stopCalibration();
+    stopPicking();
+    picking = { first: null };
+    panel.toggle(false);
+    ensureOverlay().textContent = t('pickRangeStart');
+    global.document.addEventListener('click', onPickRangeClick, true);
+    global.document.addEventListener('keydown', onCalibrateKey, true);
+  }
+
   // — calibration: user clicks one user + one assistant message —
   function ensureOverlay() {
     if (overlay && overlay.parentNode) return overlay;
@@ -183,6 +278,7 @@
   function onCalibrateKey(event) {
     if (event.key === 'Escape') {
       stopCalibration();
+      stopPicking();
       panel.setStatus(t('ready'));
     }
   }
@@ -243,9 +339,12 @@
         document: global.document,
         platform: platform,
         settings: settings,
+        version: extensionVersion(),
         onExport: doExport,
         onCopy: doCopy,
         onCalibrate: startCalibration,
+        onPickRange: startPickRange,
+        onCopyDiagnostics: copyDiagnostics,
         onResetRules: resetRules,
         onSettingsChange: function (next) {
           var value = {};
